@@ -3,7 +3,6 @@ package com.mahdimalv.prompstash.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.mahdimalv.prompstash.ui.screens.editor.PromptEditorScreen
@@ -20,6 +19,10 @@ fun AppNavigation() {
         backStack.add(destination)
     }
 
+    fun openPrompt(promptId: String) {
+        backStack.add(Editor(promptId))
+    }
+
     NavDisplay(
         backStack = backStack,
         onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
@@ -28,7 +31,8 @@ fun AppNavigation() {
                 PromptLibraryScreen(
                     currentDestination = backStack.lastOrNull(),
                     onNavigateToQuickSave = { backStack.add(QuickSave) },
-                    onNavigateToEditor = { navigateTo(Editor) },
+                    onNavigateToEditor = { navigateTo(Editor()) },
+                    onOpenPrompt = ::openPrompt,
                     onNavigateToSettings = { navigateTo(Settings) },
                 )
             }
@@ -37,18 +41,26 @@ fun AppNavigation() {
                     onBack = { backStack.removeLastOrNull() },
                 )
             }
-            entry<Editor> {
+            entry<Editor> { editor ->
                 PromptEditorScreen(
+                    promptId = editor.promptId,
                     currentDestination = backStack.lastOrNull(),
                     onNavigateToLibrary = { navigateTo(Library) },
                     onNavigateToSettings = { navigateTo(Settings) },
+                    onBack = {
+                        if (backStack.size > 1) {
+                            backStack.removeLastOrNull()
+                        } else {
+                            navigateTo(Library)
+                        }
+                    },
                 )
             }
             entry<Settings> {
                 SettingsScreen(
                     currentDestination = backStack.lastOrNull(),
                     onNavigateToLibrary = { navigateTo(Library) },
-                    onNavigateToEditor = { navigateTo(Editor) },
+                    onNavigateToEditor = { navigateTo(Editor()) },
                 )
             }
         }

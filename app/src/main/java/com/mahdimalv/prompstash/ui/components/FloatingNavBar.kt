@@ -34,7 +34,7 @@ private data class NavItem(
 
 private val navItems = listOf(
     NavItem("Library", Icons.Outlined.AutoAwesomeMotion, Library),
-    NavItem("Editor", Icons.Outlined.EditNote, Editor),
+    NavItem("Editor", Icons.Outlined.EditNote, Editor()),
     NavItem("Settings", Icons.Outlined.Settings, Settings),
 )
 

@@ -6,42 +6,58 @@ import com.mahdimalv.prompstash.data.model.Prompt
 import com.mahdimalv.prompstash.data.repository.PromptRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class LibraryUiState(
     val prompts: List<Prompt> = emptyList(),
     val searchQuery: String = "",
-    val isLoading: Boolean = false,
 ) {
     val filteredPrompts: List<Prompt>
-        get() = if (searchQuery.isBlank()) prompts
-        else prompts.filter { it.title.contains(searchQuery, ignoreCase = true) }
+        get() {
+            val query = searchQuery.trim()
+            if (query.isBlank()) return prompts
+
+            return prompts.filter { prompt ->
+                prompt.title.contains(query, ignoreCase = true) ||
+                    prompt.body.contains(query, ignoreCase = true) ||
+                    prompt.tags.any { it.contains(query, ignoreCase = true) }
+            }
+        }
+
+    val isEmpty: Boolean
+        get() = prompts.isEmpty()
+
+    val hasNoSearchResults: Boolean
+        get() = searchQuery.isNotBlank() && filteredPrompts.isEmpty()
 }
 
 @HiltViewModel
 class PromptLibraryViewModel @Inject constructor(
-    private val repository: PromptRepository,
+    repository: PromptRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LibraryUiState(isLoading = true))
-    val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
+    private val searchQuery = MutableStateFlow("")
 
-    init {
-        loadPrompts()
-    }
-
-    private fun loadPrompts() {
-        viewModelScope.launch {
-            val prompts = repository.getPrompts()
-            _uiState.update { it.copy(prompts = prompts, isLoading = false) }
-        }
-    }
+    val uiState: StateFlow<LibraryUiState> = combine(
+        repository.observePrompts(),
+        searchQuery,
+    ) { prompts, currentQuery ->
+        LibraryUiState(
+            prompts = prompts,
+            searchQuery = currentQuery,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = LibraryUiState(),
+    )
 
     fun onSearchQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+        searchQuery.update { query }
     }
 }

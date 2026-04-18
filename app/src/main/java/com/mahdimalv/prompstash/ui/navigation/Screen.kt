@@ -9,7 +9,9 @@ data object Library
 data object QuickSave
 
 @Serializable
-data object Editor
+data class Editor(
+    val promptId: String? = null,
+)
 
 @Serializable
 data object Settings
