@@ -2,12 +2,9 @@ package com.mahdimalv.prompstash.ui
 
 import android.content.ClipboardManager
 import android.content.Context
+import java.io.File
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -19,17 +16,10 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.mahdimalv.prompstash.data.repository.PromptRepository
-import com.mahdimalv.prompstash.data.settings.ThemePreference
-import com.mahdimalv.prompstash.ui.navigation.Editor
-import com.mahdimalv.prompstash.ui.navigation.Library
-import com.mahdimalv.prompstash.ui.screens.editor.PromptEditorScreen
-import com.mahdimalv.prompstash.ui.screens.editor.PromptEditorViewModel
-import com.mahdimalv.prompstash.ui.screens.library.PromptLibraryScreen
-import com.mahdimalv.prompstash.ui.screens.library.PromptLibraryViewModel
-import com.mahdimalv.prompstash.ui.screens.quicksave.QuickSaveScreen
-import com.mahdimalv.prompstash.ui.screens.quicksave.QuickSaveViewModel
-import com.mahdimalv.prompstash.ui.theme.PrompStashTheme
+import com.mahdimalv.prompstash.AppContainer
+import com.mahdimalv.prompstash.PrompStashApp
+import com.mahdimalv.prompstash.data.settings.UserPreferencesRepository
+import com.mahdimalv.prompstash.data.settings.createPreferencesDataStore
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -44,11 +34,11 @@ class PromptFlowSmokeTest {
     @Test
     fun createCopyEditAndFindPrompt() {
         val repository = TestPromptRepository()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
 
         composeRule.setContent {
-            PrompStashTheme(themePreference = ThemePreference.SYSTEM) {
-                SmokeHarness(repository = repository)
-            }
+            val appContainer = remember { createSmokeAppContainer(context, repository) }
+            PrompStashApp(appContainer = appContainer)
         }
 
         composeRule.onNodeWithText("Quick Save").performClick()
@@ -84,44 +74,17 @@ class PromptFlowSmokeTest {
     }
 }
 
-private sealed interface SmokeScreen {
-    data object LibraryScreen : SmokeScreen
-    data object QuickSaveScreen : SmokeScreen
-    data class EditorScreen(val promptId: String? = null) : SmokeScreen
-}
+private fun createSmokeAppContainer(
+    context: Context,
+    repository: TestPromptRepository,
+): AppContainer {
+    val preferencesFile = File(context.cacheDir, "smoke-test.preferences_pb")
+    preferencesFile.delete()
 
-@Composable
-private fun SmokeHarness(
-    repository: PromptRepository,
-) {
-    var screen by remember { mutableStateOf<SmokeScreen>(SmokeScreen.LibraryScreen) }
-
-    val libraryViewModel = remember { PromptLibraryViewModel(repository) }
-    val quickSaveViewModel = remember { QuickSaveViewModel(repository) }
-    val editorViewModel = remember { PromptEditorViewModel(repository) }
-
-    when (val currentScreen = screen) {
-        SmokeScreen.LibraryScreen -> PromptLibraryScreen(
-            currentDestination = Library,
-            onNavigateToQuickSave = { screen = SmokeScreen.QuickSaveScreen },
-            onNavigateToEditor = { screen = SmokeScreen.EditorScreen() },
-            onOpenPrompt = { promptId -> screen = SmokeScreen.EditorScreen(promptId) },
-            onNavigateToSettings = {},
-            viewModel = libraryViewModel,
-        )
-
-        SmokeScreen.QuickSaveScreen -> QuickSaveScreen(
-            onBack = { screen = SmokeScreen.LibraryScreen },
-            viewModel = quickSaveViewModel,
-        )
-
-        is SmokeScreen.EditorScreen -> PromptEditorScreen(
-            promptId = currentScreen.promptId,
-            currentDestination = Editor(currentScreen.promptId),
-            onNavigateToLibrary = { screen = SmokeScreen.LibraryScreen },
-            onNavigateToSettings = {},
-            onBack = { screen = SmokeScreen.LibraryScreen },
-            viewModel = editorViewModel,
-        )
-    }
+    return AppContainer(
+        promptRepository = repository,
+        userPreferencesRepository = UserPreferencesRepository(
+            createPreferencesDataStore(producePath = { preferencesFile.absolutePath })
+        ),
+    )
 }

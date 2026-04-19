@@ -24,4 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "PrompStash"
 include(":app")
+include(":shared")
+include(":desktopApp")
  
