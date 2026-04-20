@@ -14,6 +14,7 @@ import java.util.UUID
 
 class UserPreferencesRepository(
     private val dataStore: DataStore<Preferences>,
+    private val onPinnedPromptsChanged: suspend () -> Unit = {},
 ) {
     val pinnedPromptIds: Flow<List<String>> = dataStore.data.map { preferences ->
         preferences[PinnedPromptIdsKey]
@@ -81,6 +82,7 @@ class UserPreferencesRepository(
     }
 
     suspend fun togglePinnedPrompt(promptId: String) {
+        var didChange = false
         dataStore.edit { preferences ->
             val currentPinnedPromptIds = preferences[PinnedPromptIdsKey]
                 .orEmpty()
@@ -92,6 +94,7 @@ class UserPreferencesRepository(
 
             if (currentPinnedPromptIds.remove(promptId)) {
                 preferences[PinnedPromptIdsKey] = currentPinnedPromptIds.joinToString(PinnedPromptIdsSeparator)
+                didChange = true
                 return@edit
             }
 
@@ -101,6 +104,11 @@ class UserPreferencesRepository(
 
             currentPinnedPromptIds.add(0, promptId)
             preferences[PinnedPromptIdsKey] = currentPinnedPromptIds.joinToString(PinnedPromptIdsSeparator)
+            didChange = true
+        }
+
+        if (didChange) {
+            onPinnedPromptsChanged()
         }
     }
 

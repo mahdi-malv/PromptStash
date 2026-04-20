@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PrompStash</string>
+    <string name="widget_name">Pinned Prompts</string>
+    <string name="widget_description">Quick copy access to pinned prompts.</string>
 </resources>

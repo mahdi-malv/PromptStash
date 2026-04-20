@@ -6,10 +6,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.mahdimalv.prompstash.PrompStashApp
+import com.mahdimalv.prompstash.widget.PromptStashWidgetUpdater
 
 class MainActivity : ComponentActivity() {
     private val appContainer: AppContainer by lazy(LazyThreadSafetyMode.NONE) {
-        createAppContainer(applicationContext)
+        createAppContainer(
+            context = applicationContext,
+            onPromptsChanged = { PromptStashWidgetUpdater.enqueue(applicationContext) },
+            onPinnedPromptsChanged = { PromptStashWidgetUpdater.enqueue(applicationContext) },
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

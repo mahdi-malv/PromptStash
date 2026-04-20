@@ -12,6 +12,7 @@ interface PromptSyncLocalStore {
 
 class RoomPromptSyncLocalStore(
     private val database: PromptDatabase,
+    private val onPromptsChanged: suspend () -> Unit = {},
 ) : PromptSyncLocalStore {
     private val promptDao = database.promptDao()
     private val typeConverters = PromptTypeConverters()
@@ -31,8 +32,12 @@ class RoomPromptSyncLocalStore(
                 localRecords = localRecords,
                 remoteRecords = remoteRecords,
             )
+            if (mergedRecords == localRecords) {
+                return@withContext mergedRecords
+            }
             promptDao.deleteAllPrompts()
             promptDao.upsertPrompts(mergedRecords.map { it.toEntity() })
+            onPromptsChanged()
             mergedRecords
         }
 

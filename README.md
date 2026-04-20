@@ -6,7 +6,7 @@ A compose multiplatform app to let the user save useful prompts
 - [x] Basic tags
 - [x] Theme settings
 - [x] Sync
-- [ ] Android homescreen widget
+- [x] Android homescreen widget
 - [ ] iOS target
 
 ## Dropbox setup

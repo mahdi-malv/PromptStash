@@ -20,6 +20,7 @@ interface PromptRepository {
 class RoomPromptRepository(
     private val promptDao: PromptDao,
     private val deviceIdProvider: suspend () -> String,
+    private val onPromptsChanged: suspend () -> Unit = {},
 ) : PromptRepository {
 
     override fun observePrompts(): Flow<List<Prompt>> = promptDao.observePrompts().map { prompts ->
@@ -36,6 +37,7 @@ class RoomPromptRepository(
             modifiedAt = prompt.updatedAt,
             modifiedByDeviceId = deviceIdProvider(),
         ))
+        onPromptsChanged()
     }
 
     override suspend fun deletePrompt(id: String) {
@@ -49,6 +51,7 @@ class RoomPromptRepository(
                 modifiedByDeviceId = deviceIdProvider(),
             )
         )
+        onPromptsChanged()
     }
 }
 

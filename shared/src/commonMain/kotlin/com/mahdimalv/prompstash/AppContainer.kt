@@ -38,9 +38,14 @@ fun createAppContainer(
     externalUrlLauncher: ExternalUrlLauncher,
     dropboxAuthorizationRedirectHandler: DropboxAuthorizationRedirectHandler,
     appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    onPromptsChanged: suspend () -> Unit = {},
+    onPinnedPromptsChanged: suspend () -> Unit = {},
 ): AppContainer {
     val database = buildPromptDatabase(databaseBuilder)
-    val userPreferencesRepository = UserPreferencesRepository(preferencesDataStore)
+    val userPreferencesRepository = UserPreferencesRepository(
+        dataStore = preferencesDataStore,
+        onPinnedPromptsChanged = onPinnedPromptsChanged,
+    )
     val httpClient = createPlatformHttpClient()
     val dropboxAuthManager = DropboxAuthManager(
         secureCredentialStore = secureCredentialStore,
@@ -50,7 +55,10 @@ fun createAppContainer(
         appScope = appScope,
     )
     val syncCoordinator = PromptSyncCoordinator(
-        localStore = RoomPromptSyncLocalStore(database),
+        localStore = RoomPromptSyncLocalStore(
+            database = database,
+            onPromptsChanged = onPromptsChanged,
+        ),
         userPreferencesRepository = userPreferencesRepository,
         dropboxAuthManager = dropboxAuthManager,
         remotes = listOf(
@@ -61,6 +69,7 @@ fun createAppContainer(
         delegate = RoomPromptRepository(
             promptDao = database.promptDao(),
             deviceIdProvider = userPreferencesRepository::getOrCreateDeviceId,
+            onPromptsChanged = onPromptsChanged,
         ),
         syncStore = syncCoordinator,
         appScope = appScope,
