@@ -20,22 +20,65 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val MAX_PINNED_PROMPTS = 3
+
+data class LibraryPromptItem(
+    val prompt: Prompt,
+    val isPinned: Boolean,
+    val showPinAction: Boolean,
+)
+
 data class LibraryUiState(
     val prompts: List<Prompt> = emptyList(),
+    val pinnedPromptIds: List<String> = emptyList(),
     val searchQuery: String = "",
     val isSyncing: Boolean = false,
     val selectedRemote: RemoteType = RemoteType.NONE,
     val syncStatus: SyncStatus = SyncStatus(),
 ) {
-    val filteredPrompts: List<Prompt>
+    private val activePinnedPromptIds: List<String>
+        get() = pinnedPromptIds.filter { pinnedId ->
+            prompts.any { prompt -> prompt.id == pinnedId }
+        }
+
+    val filteredPrompts: List<LibraryPromptItem>
         get() {
             val query = searchQuery.trim()
-            if (query.isBlank()) return prompts
+            val visiblePrompts = if (query.isBlank()) {
+                prompts
+            } else {
+                prompts.filter { prompt ->
+                    prompt.title.contains(query, ignoreCase = true) ||
+                        prompt.body.contains(query, ignoreCase = true) ||
+                        prompt.tags.any { it.contains(query, ignoreCase = true) }
+                }
+            }
 
-            return prompts.filter { prompt ->
-                prompt.title.contains(query, ignoreCase = true) ||
-                    prompt.body.contains(query, ignoreCase = true) ||
-                    prompt.tags.any { it.contains(query, ignoreCase = true) }
+            val pinnedPromptsById = visiblePrompts.associateBy(Prompt::id)
+            val orderedPinnedPrompts = activePinnedPromptIds.mapNotNull(pinnedPromptsById::get)
+            val pinnedPromptIdSet = activePinnedPromptIds.toSet()
+            val orderedUnpinnedPrompts = visiblePrompts.filterNot { it.id in pinnedPromptIdSet }
+            val showUnpinnedPinAction = activePinnedPromptIds.size < MAX_PINNED_PROMPTS
+
+            return buildList {
+                orderedPinnedPrompts.forEach { prompt ->
+                    add(
+                        LibraryPromptItem(
+                            prompt = prompt,
+                            isPinned = true,
+                            showPinAction = true,
+                        )
+                    )
+                }
+                orderedUnpinnedPrompts.forEach { prompt ->
+                    add(
+                        LibraryPromptItem(
+                            prompt = prompt,
+                            isPinned = false,
+                            showPinAction = showUnpinnedPinAction,
+                        )
+                    )
+                }
             }
         }
 
@@ -58,20 +101,28 @@ class PromptLibraryViewModel(
 
     private val searchQuery = MutableStateFlow("")
     private val _events = MutableSharedFlow<LibraryEvent>()
+    private val libraryState = combine(
+        repository.observePrompts(),
+        userPreferencesRepository.pinnedPromptIds,
+        searchQuery,
+        promptSyncStore.isSyncing,
+    ) { prompts, pinnedPromptIds, currentQuery, isSyncing ->
+        LibraryUiState(
+            prompts = prompts,
+            pinnedPromptIds = pinnedPromptIds,
+            searchQuery = currentQuery,
+            isSyncing = isSyncing,
+        )
+    }
 
     val events: SharedFlow<LibraryEvent> = _events.asSharedFlow()
 
     val uiState: StateFlow<LibraryUiState> = combine(
-        repository.observePrompts(),
-        searchQuery,
-        promptSyncStore.isSyncing,
+        libraryState,
         userPreferencesRepository.remoteType,
         userPreferencesRepository.syncStatus,
-    ) { prompts, currentQuery, isSyncing, remoteType, syncStatus ->
-        LibraryUiState(
-            prompts = prompts,
-            searchQuery = currentQuery,
-            isSyncing = isSyncing,
+    ) { libraryState, remoteType, syncStatus ->
+        libraryState.copy(
             selectedRemote = remoteType,
             syncStatus = syncStatus,
         )
@@ -89,6 +140,12 @@ class PromptLibraryViewModel(
         viewModelScope.launch {
             val result = promptSyncStore.sync(SyncTrigger.MANUAL)
             _events.emit(LibraryEvent.Message(result.message))
+        }
+    }
+
+    fun onPinToggle(promptId: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.togglePinnedPrompt(promptId)
         }
     }
 }

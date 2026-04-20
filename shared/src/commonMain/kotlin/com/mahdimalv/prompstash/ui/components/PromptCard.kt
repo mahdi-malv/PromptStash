@@ -3,12 +3,15 @@ package com.mahdimalv.prompstash.ui.components
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -26,7 +29,10 @@ import com.mahdimalv.prompstash.data.model.Prompt
 @Composable
 fun PromptCard(
     prompt: Prompt,
+    isPinned: Boolean,
+    showPinAction: Boolean,
     onClick: () -> Unit,
+    onPinToggle: () -> Unit,
     onCopy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -40,13 +46,25 @@ fun PromptCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = prompt.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                PromptTitle(
+                    title = prompt.title,
+                    modifier = Modifier.weight(1f),
+                )
+                if (showPinAction) {
+                    IconButton(onClick = onPinToggle) {
+                        Icon(
+                            imageVector = Icons.Outlined.PushPin,
+                            contentDescription = if (isPinned) "Unpin prompt" else "Pin prompt",
+                            tint = if (isPinned) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 text = prompt.body,
@@ -91,4 +109,19 @@ fun PromptCard(
             }
         }
     }
+}
+
+@Composable
+private fun RowScope.PromptTitle(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
 }

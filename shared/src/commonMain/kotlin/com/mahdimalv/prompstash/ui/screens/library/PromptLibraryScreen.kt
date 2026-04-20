@@ -203,14 +203,20 @@ fun PromptLibraryScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(bottom = 24.dp),
                     ) {
-                        items(uiState.filteredPrompts, key = Prompt::id) { prompt ->
+                        items(
+                            items = uiState.filteredPrompts,
+                            key = { it.prompt.id },
+                        ) { promptItem ->
                             PromptCard(
-                                prompt = prompt,
-                                onClick = { onOpenPrompt(prompt.id) },
+                                prompt = promptItem.prompt,
+                                isPinned = promptItem.isPinned,
+                                showPinAction = promptItem.showPinAction,
+                                onClick = { onOpenPrompt(promptItem.prompt.id) },
+                                onPinToggle = { viewModel.onPinToggle(promptItem.prompt.id) },
                                 onCopy = {
-                                    clipboardManager.setText(AnnotatedString(prompt.body))
+                                    clipboardManager.setText(AnnotatedString(promptItem.prompt.body))
                                     coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Copied \"${prompt.title}\"")
+                                        snackbarHostState.showSnackbar("Copied \"${promptItem.prompt.title}\"")
                                     }
                                 },
                             )

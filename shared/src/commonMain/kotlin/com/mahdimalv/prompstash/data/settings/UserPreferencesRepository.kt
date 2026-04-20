@@ -15,6 +15,15 @@ import java.util.UUID
 class UserPreferencesRepository(
     private val dataStore: DataStore<Preferences>,
 ) {
+    val pinnedPromptIds: Flow<List<String>> = dataStore.data.map { preferences ->
+        preferences[PinnedPromptIdsKey]
+            .orEmpty()
+            .split(PinnedPromptIdsSeparator)
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .take(MaxPinnedPrompts)
+    }
+
     val themePreference: Flow<ThemePreference> = dataStore.data.map { preferences ->
         val storedValue = preferences[ThemePreferenceKey]
         ThemePreference.entries.firstOrNull { it.name == storedValue } ?: ThemePreference.SYSTEM
@@ -71,12 +80,40 @@ class UserPreferencesRepository(
         }
     }
 
+    suspend fun togglePinnedPrompt(promptId: String) {
+        dataStore.edit { preferences ->
+            val currentPinnedPromptIds = preferences[PinnedPromptIdsKey]
+                .orEmpty()
+                .split(PinnedPromptIdsSeparator)
+                .map(String::trim)
+                .filter(String::isNotBlank)
+                .take(MaxPinnedPrompts)
+                .toMutableList()
+
+            if (currentPinnedPromptIds.remove(promptId)) {
+                preferences[PinnedPromptIdsKey] = currentPinnedPromptIds.joinToString(PinnedPromptIdsSeparator)
+                return@edit
+            }
+
+            if (currentPinnedPromptIds.size >= MaxPinnedPrompts) {
+                return@edit
+            }
+
+            currentPinnedPromptIds.add(0, promptId)
+            preferences[PinnedPromptIdsKey] = currentPinnedPromptIds.joinToString(PinnedPromptIdsSeparator)
+        }
+    }
+
     private companion object {
+        private const val MaxPinnedPrompts = 3
+        private const val PinnedPromptIdsSeparator = "\n"
         val ThemePreferenceKey = stringPreferencesKey("theme_preference")
         val DeviceIdKey = stringPreferencesKey("device_id")
         val RemoteTypeKey = stringPreferencesKey("remote_type")
         val LastSyncTimestampKey = longPreferencesKey("last_sync_timestamp")
         val LastSyncWasSuccessfulKey = booleanPreferencesKey("last_sync_was_successful")
         val LastSyncMessageKey = stringPreferencesKey("last_sync_message")
+        // Pinning is local-only device UI state and is intentionally not synced.
+        val PinnedPromptIdsKey = stringPreferencesKey("pinned_prompt_ids")
     }
 }
