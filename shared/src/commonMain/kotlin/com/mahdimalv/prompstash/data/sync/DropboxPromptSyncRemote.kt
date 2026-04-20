@@ -55,11 +55,16 @@ class DropboxPromptSyncRemote(
             }
 
             response.status.value == 401 -> {
-                throw PromptSyncRemoteException("Dropbox rejected the saved access token.")
+                throw DropboxAuthException(
+                    "Dropbox authentication expired. Authenticate again in Settings.",
+                    shouldClearSession = true,
+                )
             }
 
             else -> {
-                throw PromptSyncRemoteException("Dropbox download failed (${response.status.value}).")
+                throw PromptSyncRemoteException(
+                    "Dropbox download failed (${response.status.value}): ${responseBody.compactDropboxError()}"
+                )
             }
         }
     }
@@ -91,11 +96,16 @@ class DropboxPromptSyncRemote(
             }
 
             response.status.value == 401 -> {
-                throw PromptSyncRemoteException("Dropbox rejected the saved access token.")
+                throw DropboxAuthException(
+                    "Dropbox authentication expired. Authenticate again in Settings.",
+                    shouldClearSession = true,
+                )
             }
 
             else -> {
-                throw PromptSyncRemoteException("Dropbox upload failed (${response.status.value}).")
+                throw PromptSyncRemoteException(
+                    "Dropbox upload failed (${response.status.value}): ${responseBody.compactDropboxError()}"
+                )
             }
         }
     }
@@ -119,13 +129,21 @@ class DropboxPromptSyncRemote(
     private fun bearerToken(accessToken: String): String = "Bearer $accessToken"
 
     private companion object {
-        private const val REMOTE_FILE_PATH = "/Apps/PrompStash/prompts-sync-v1.json"
+        // App-folder Dropbox apps are already rooted inside /Apps/<App Name>,
+        // so the API path should be relative to that root.
+        private const val REMOTE_FILE_PATH = "/prompts-sync-v1.json"
         private const val DROPBOX_API_ARG_HEADER = "Dropbox-API-Arg"
         private const val DROPBOX_API_RESULT_HEADER = "Dropbox-Api-Result"
         private const val DROPBOX_DOWNLOAD_URL = "https://content.dropboxapi.com/2/files/download"
         private const val DROPBOX_UPLOAD_URL = "https://content.dropboxapi.com/2/files/upload"
     }
 }
+
+private fun String.compactDropboxError(): String = lineSequence()
+    .joinToString(" ")
+    .replace(Regex("\\s+"), " ")
+    .trim()
+    .ifBlank { "no details returned" }
 
 @Serializable
 private data class DropboxSnapshot(

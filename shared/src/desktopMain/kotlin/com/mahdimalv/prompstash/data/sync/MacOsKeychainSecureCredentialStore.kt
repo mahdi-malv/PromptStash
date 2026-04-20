@@ -2,53 +2,58 @@ package com.mahdimalv.prompstash.data.sync
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 
 private const val KEYCHAIN_SERVICE = "PrompStash"
 
-class MacOsKeychainSecureCredentialStore : SecureCredentialStore {
+class MacOsKeychainSecureCredentialStore(
+    private val json: Json = Json { ignoreUnknownKeys = true },
+) : SecureCredentialStore {
 
-    override suspend fun readAccessToken(remoteType: RemoteType): String? = withContext(Dispatchers.IO) {
+    override suspend fun readDropboxSession(): DropboxAuthSession? = withContext(Dispatchers.IO) {
         val result = securityCommand(
             "find-generic-password",
             "-a",
-            remoteType.accountName(),
+            DROPBOX_ACCOUNT_NAME,
             "-s",
             KEYCHAIN_SERVICE,
             "-w",
         )
         if (result.exitCode != 0) return@withContext null
-        result.stdout.trim().ifBlank { null }
+        result.stdout.trim().ifBlank { null }?.let {
+            json.decodeFromString(DropboxAuthSession.serializer(), it)
+        }
     }
 
-    override suspend fun saveAccessToken(remoteType: RemoteType, accessToken: String) = withContext(Dispatchers.IO) {
+    override suspend fun saveDropboxSession(session: DropboxAuthSession) = withContext(Dispatchers.IO) {
         val result = securityCommand(
             "add-generic-password",
             "-U",
             "-a",
-            remoteType.accountName(),
+            DROPBOX_ACCOUNT_NAME,
             "-s",
             KEYCHAIN_SERVICE,
             "-w",
-            accessToken,
+            json.encodeToString(DropboxAuthSession.serializer(), session),
         )
         if (result.exitCode != 0) {
-            error("Unable to save the Dropbox access token in macOS Keychain.")
+            error("Unable to save the Dropbox auth session in macOS Keychain.")
         }
     }
 
-    override suspend fun clearAccessToken(remoteType: RemoteType) = withContext(Dispatchers.IO) {
+    override suspend fun clearDropboxSession() = withContext(Dispatchers.IO) {
         securityCommand(
             "delete-generic-password",
             "-a",
-            remoteType.accountName(),
+            DROPBOX_ACCOUNT_NAME,
             "-s",
             KEYCHAIN_SERVICE,
         )
         Unit
     }
-
-    private fun RemoteType.accountName(): String = "remote-${name.lowercase()}"
 }
+
+private const val DROPBOX_ACCOUNT_NAME = "remote-dropbox"
 
 private data class SecurityCommandResult(
     val exitCode: Int,

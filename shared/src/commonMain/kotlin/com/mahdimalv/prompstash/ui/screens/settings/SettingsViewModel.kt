@@ -4,13 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mahdimalv.prompstash.data.settings.ThemePreference
 import com.mahdimalv.prompstash.data.settings.UserPreferencesRepository
+import com.mahdimalv.prompstash.data.sync.DropboxAuthEvent
+import com.mahdimalv.prompstash.data.sync.DropboxAuthManager
+import com.mahdimalv.prompstash.data.sync.DropboxAuthState
 import com.mahdimalv.prompstash.data.sync.PromptSyncStore
 import com.mahdimalv.prompstash.data.sync.RemoteType
-import com.mahdimalv.prompstash.data.sync.SecureCredentialStore
 import com.mahdimalv.prompstash.data.sync.SyncStatus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -21,8 +22,7 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val themePreference: ThemePreference = ThemePreference.SYSTEM,
     val selectedRemote: RemoteType = RemoteType.NONE,
-    val hasDropboxToken: Boolean = false,
-    val dropboxTokenInput: String = "",
+    val dropboxAuthState: DropboxAuthState = DropboxAuthState(),
     val syncStatus: SyncStatus = SyncStatus(),
     val isSyncing: Boolean = false,
 )
@@ -33,12 +33,9 @@ sealed interface SettingsEvent {
 
 class SettingsViewModel(
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val secureCredentialStore: SecureCredentialStore,
+    private val dropboxAuthManager: DropboxAuthManager,
     private val promptSyncStore: PromptSyncStore,
 ) : ViewModel() {
-
-    private val dropboxTokenInput = MutableStateFlow("")
-    private val hasDropboxToken = MutableStateFlow(false)
     private val _events = MutableSharedFlow<SettingsEvent>()
 
     val events: SharedFlow<SettingsEvent> = _events.asSharedFlow()
@@ -53,15 +50,13 @@ class SettingsViewModel(
 
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsState,
-        dropboxTokenInput,
-        hasDropboxToken,
+        dropboxAuthManager.authState,
         promptSyncStore.isSyncing,
-    ) { settingsState, tokenInput, hasToken, isSyncing ->
+    ) { settingsState, authState, isSyncing ->
         SettingsUiState(
             themePreference = settingsState.first,
             selectedRemote = settingsState.second,
-            hasDropboxToken = hasToken,
-            dropboxTokenInput = tokenInput,
+            dropboxAuthState = authState,
             syncStatus = settingsState.third,
             isSyncing = isSyncing,
         )
@@ -72,7 +67,21 @@ class SettingsViewModel(
     )
 
     init {
-        refreshDropboxTokenState()
+        viewModelScope.launch {
+            dropboxAuthManager.events.collect { event ->
+                when (event) {
+                    is DropboxAuthEvent.Authenticated -> {
+                        if (uiState.value.selectedRemote == RemoteType.NONE) {
+                            userPreferencesRepository.setRemoteType(RemoteType.DROPBOX)
+                        }
+                    }
+
+                    is DropboxAuthEvent.Message -> {
+                        _events.emit(SettingsEvent.Message(event.value))
+                    }
+                }
+            }
+        }
     }
 
     fun onThemePreferenceSelected(themePreference: ThemePreference) {
@@ -87,42 +96,19 @@ class SettingsViewModel(
         }
     }
 
-    fun onDropboxTokenInputChange(value: String) {
-        dropboxTokenInput.value = value
-    }
-
-    fun saveDropboxToken() {
-        val token = dropboxTokenInput.value.trim()
-        if (token.isBlank()) {
-            viewModelScope.launch {
-                _events.emit(SettingsEvent.Message("Paste a Dropbox access token before saving it."))
+    fun beginDropboxAuth() {
+        viewModelScope.launch {
+            try {
+                _events.emit(SettingsEvent.Message(dropboxAuthManager.startAuthorization()))
+            } catch (error: Exception) {
+                _events.emit(SettingsEvent.Message(error.message ?: "Dropbox auth failed."))
             }
-            return
-        }
-
-        viewModelScope.launch {
-            secureCredentialStore.saveAccessToken(RemoteType.DROPBOX, token)
-            hasDropboxToken.value = true
-            dropboxTokenInput.value = ""
-            if (uiState.value.selectedRemote == RemoteType.NONE) {
-                userPreferencesRepository.setRemoteType(RemoteType.DROPBOX)
-            }
-            _events.emit(SettingsEvent.Message("Dropbox token saved securely."))
         }
     }
 
-    fun removeDropboxToken() {
+    fun removeDropboxAuth() {
         viewModelScope.launch {
-            secureCredentialStore.clearAccessToken(RemoteType.DROPBOX)
-            hasDropboxToken.value = false
-            dropboxTokenInput.value = ""
-            _events.emit(SettingsEvent.Message("Dropbox token removed."))
-        }
-    }
-
-    private fun refreshDropboxTokenState() {
-        viewModelScope.launch {
-            hasDropboxToken.value = !secureCredentialStore.readAccessToken(RemoteType.DROPBOX).isNullOrBlank()
+            dropboxAuthManager.removeAuthentication()
         }
     }
 }

@@ -11,7 +11,7 @@ import kotlinx.coroutines.sync.withLock
 class PromptSyncCoordinator(
     private val localStore: PromptSyncLocalStore,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val secureCredentialStore: SecureCredentialStore,
+    private val dropboxAuthManager: DropboxAuthManager,
     remotes: List<PromptSyncRemote>,
     private val clock: () -> Long = { System.currentTimeMillis() },
 ) : PromptSyncStore {
@@ -33,9 +33,12 @@ class PromptSyncCoordinator(
             val remote = remotesByType[remoteType]
                 ?: return SyncResult.Failure("The selected sync remote is not available in this build.")
 
-            val accessToken = secureCredentialStore.readAccessToken(remoteType)
+            val accessToken = when (remoteType) {
+                RemoteType.DROPBOX -> dropboxAuthManager.getValidAccessToken()
+                RemoteType.NONE -> null
+            }
             if (accessToken.isNullOrBlank()) {
-                return SyncResult.Skipped("Add your Dropbox access token in Settings before syncing.")
+                return SyncResult.Skipped("Authenticate Dropbox in Settings before syncing.")
             }
 
             runSync(remote, accessToken)
@@ -48,6 +51,13 @@ class PromptSyncCoordinator(
             )
         } catch (error: PromptSyncRemoteException) {
             val message = error.message ?: "Sync failed."
+            userPreferencesRepository.recordSyncFailure(clock(), message)
+            return SyncResult.Failure(message)
+        } catch (error: DropboxAuthException) {
+            val message = error.message ?: "Dropbox authentication failed."
+            if (error.shouldClearSession) {
+                dropboxAuthManager.clearAuthentication(message = message)
+            }
             userPreferencesRepository.recordSyncFailure(clock(), message)
             return SyncResult.Failure(message)
         } catch (error: PromptSyncConflictException) {

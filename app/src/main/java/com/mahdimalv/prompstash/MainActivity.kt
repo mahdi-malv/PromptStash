@@ -1,5 +1,6 @@
 package com.mahdimalv.prompstash
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,9 +14,22 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleDropboxRedirect(intent)
         enableEdgeToEdge()
         setContent {
             PrompStashApp(appContainer = appContainer)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDropboxRedirect(intent)
+    }
+
+    private fun handleDropboxRedirect(intent: Intent?) {
+        intent?.dataString?.takeIf { it.startsWith("prompstash://dropbox/auth") }?.let {
+            appContainer.dropboxAuthManager.receiveRedirectUri(it)
         }
     }
 }

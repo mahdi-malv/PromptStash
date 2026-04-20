@@ -11,6 +11,9 @@ import com.mahdimalv.prompstash.data.repository.RoomPromptRepository
 import com.mahdimalv.prompstash.data.repository.SyncingPromptRepository
 import com.mahdimalv.prompstash.data.settings.UserPreferencesRepository
 import com.mahdimalv.prompstash.data.sync.DropboxPromptSyncRemote
+import com.mahdimalv.prompstash.data.sync.DropboxAuthManager
+import com.mahdimalv.prompstash.data.sync.DropboxAuthorizationRedirectHandler
+import com.mahdimalv.prompstash.data.sync.ExternalUrlLauncher
 import com.mahdimalv.prompstash.data.sync.PromptSyncCoordinator
 import com.mahdimalv.prompstash.data.sync.PromptSyncStore
 import com.mahdimalv.prompstash.data.sync.RoomPromptSyncLocalStore
@@ -25,22 +28,33 @@ class AppContainer(
     val userPreferencesRepository: UserPreferencesRepository,
     val promptSyncStore: PromptSyncStore,
     val secureCredentialStore: SecureCredentialStore,
+    val dropboxAuthManager: DropboxAuthManager,
 )
 
 fun createAppContainer(
     databaseBuilder: RoomDatabase.Builder<PromptDatabase>,
     preferencesDataStore: DataStore<Preferences>,
     secureCredentialStore: SecureCredentialStore,
+    externalUrlLauncher: ExternalUrlLauncher,
+    dropboxAuthorizationRedirectHandler: DropboxAuthorizationRedirectHandler,
     appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ): AppContainer {
     val database = buildPromptDatabase(databaseBuilder)
     val userPreferencesRepository = UserPreferencesRepository(preferencesDataStore)
+    val httpClient = createPlatformHttpClient()
+    val dropboxAuthManager = DropboxAuthManager(
+        secureCredentialStore = secureCredentialStore,
+        httpClient = httpClient,
+        browserLauncher = externalUrlLauncher,
+        redirectHandler = dropboxAuthorizationRedirectHandler,
+        appScope = appScope,
+    )
     val syncCoordinator = PromptSyncCoordinator(
         localStore = RoomPromptSyncLocalStore(database),
         userPreferencesRepository = userPreferencesRepository,
-        secureCredentialStore = secureCredentialStore,
+        dropboxAuthManager = dropboxAuthManager,
         remotes = listOf(
-            DropboxPromptSyncRemote(createPlatformHttpClient()),
+            DropboxPromptSyncRemote(httpClient),
         ),
     )
     val promptRepository = SyncingPromptRepository(
@@ -57,6 +71,7 @@ fun createAppContainer(
         userPreferencesRepository = userPreferencesRepository,
         promptSyncStore = syncCoordinator,
         secureCredentialStore = secureCredentialStore,
+        dropboxAuthManager = dropboxAuthManager,
     )
 }
 

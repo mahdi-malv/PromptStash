@@ -1,7 +1,7 @@
 package com.mahdimalv.prompstash.data.sync
 
 interface SecureCredentialStore {
-    suspend fun readAccessToken(remoteType: RemoteType): String?
-    suspend fun saveAccessToken(remoteType: RemoteType, accessToken: String)
-    suspend fun clearAccessToken(remoteType: RemoteType)
+    suspend fun readDropboxSession(): DropboxAuthSession?
+    suspend fun saveDropboxSession(session: DropboxAuthSession)
+    suspend fun clearDropboxSession()
 }

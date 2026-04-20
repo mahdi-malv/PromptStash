@@ -2,6 +2,7 @@ package com.mahdimalv.prompstash.data.sync
 
 import android.content.Context
 import android.util.Base64
+import kotlinx.serialization.json.Json
 import java.nio.charset.StandardCharsets
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -19,24 +20,25 @@ private const val TRANSFORMATION = "AES/GCM/NoPadding"
 
 class AndroidSecureCredentialStore(
     private val context: Context,
+    private val json: Json = Json { ignoreUnknownKeys = true },
 ) : SecureCredentialStore {
 
-    override suspend fun readAccessToken(remoteType: RemoteType): String? = withContext(Dispatchers.IO) {
-        val storedValue = context.sharedPreferences().getString(remoteType.preferenceKey(), null) ?: return@withContext null
-        decrypt(storedValue)
+    override suspend fun readDropboxSession(): DropboxAuthSession? = withContext(Dispatchers.IO) {
+        val storedValue = context.sharedPreferences().getString(DROPBOX_SESSION_KEY, null) ?: return@withContext null
+        decrypt(storedValue)?.let { json.decodeFromString(DropboxAuthSession.serializer(), it) }
     }
 
-    override suspend fun saveAccessToken(remoteType: RemoteType, accessToken: String) = withContext(Dispatchers.IO) {
+    override suspend fun saveDropboxSession(session: DropboxAuthSession) = withContext(Dispatchers.IO) {
         context.sharedPreferences()
             .edit()
-            .putString(remoteType.preferenceKey(), encrypt(accessToken))
+            .putString(DROPBOX_SESSION_KEY, encrypt(json.encodeToString(DropboxAuthSession.serializer(), session)))
             .apply()
     }
 
-    override suspend fun clearAccessToken(remoteType: RemoteType) = withContext(Dispatchers.IO) {
+    override suspend fun clearDropboxSession() = withContext(Dispatchers.IO) {
         context.sharedPreferences()
             .edit()
-            .remove(remoteType.preferenceKey())
+            .remove(DROPBOX_SESSION_KEY)
             .apply()
     }
 
@@ -84,5 +86,7 @@ class AndroidSecureCredentialStore(
 
     private fun Context.sharedPreferences() = getSharedPreferences(SECURE_PREFS_FILE, Context.MODE_PRIVATE)
 
-    private fun RemoteType.preferenceKey(): String = "${name.lowercase()}_access_token"
+    private companion object {
+        private const val DROPBOX_SESSION_KEY = "dropbox_session"
+    }
 }

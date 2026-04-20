@@ -1,5 +1,7 @@
 @file:Suppress("DEPRECATION", "DEPRECATION_ERROR")
 
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
@@ -8,6 +10,39 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.ksp)
+}
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use(::load)
+    }
+}
+
+val dropboxAppKey = (findProperty("dropbox.app.key") as? String)
+    ?: localProperties.getProperty("dropbox.app.key")
+    ?: ""
+
+val generatedDropboxConfigDir = layout.buildDirectory.dir("generated/source/dropboxConfig/commonMain/kotlin")
+
+val generateDropboxConfig by tasks.registering {
+    inputs.property("dropboxAppKey", dropboxAppKey)
+    outputs.dir(generatedDropboxConfigDir)
+
+    doLast {
+        val outputDir = generatedDropboxConfigDir.get().asFile
+        val packageDir = outputDir.resolve("com/mahdimalv/prompstash/data/sync")
+        packageDir.mkdirs()
+        packageDir.resolve("DropboxBuildConfig.kt").writeText(
+            """
+            package com.mahdimalv.prompstash.data.sync
+
+            internal object DropboxBuildConfig {
+                const val CLIENT_ID: String = ${dropboxAppKey.toKotlinStringLiteral()}
+            }
+            """.trimIndent()
+        )
+    }
 }
 
 kotlin {
@@ -25,6 +60,7 @@ kotlin {
 
     sourceSets {
         val commonMain by getting {
+            kotlin.srcDir(generatedDropboxConfigDir)
             dependencies {
                 api(compose.runtime)
                 api(compose.foundation)
@@ -79,6 +115,12 @@ dependencies {
     add("kspDesktop", libs.androidx.room.compiler)
 }
 
+tasks.configureEach {
+    if (name.contains("Kotlin", ignoreCase = true) || name.startsWith("ksp", ignoreCase = true)) {
+        dependsOn(generateDropboxConfig)
+    }
+}
+
 compose.resources {
     publicResClass = true
     packageOfResClass = "com.mahdimalv.prompstash.resources"
@@ -87,4 +129,19 @@ compose.resources {
 
 room {
     schemaDirectory("$projectDir/schemas")
+}
+
+fun String.toKotlinStringLiteral(): String = buildString {
+    append('"')
+    for (char in this@toKotlinStringLiteral) {
+        when (char) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(char)
+        }
+    }
+    append('"')
 }

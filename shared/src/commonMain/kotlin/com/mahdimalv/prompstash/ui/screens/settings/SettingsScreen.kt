@@ -27,8 +27,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -36,9 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mahdimalv.prompstash.LocalAppContainer
@@ -174,7 +170,7 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Choose a remote provider and save the Dropbox access token securely on this device.",
+                "Choose a remote provider and connect Dropbox securely for sync.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -211,65 +207,55 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                if (uiState.hasDropboxToken) "Dropbox token is stored securely." else "Dropbox is not connected yet.",
+                dropboxFootnote(uiState),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
-            TextField(
-                value = uiState.dropboxTokenInput,
-                onValueChange = viewModel::onDropboxTokenInputChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("settings_dropbox_token"),
-                label = { Text("Dropbox access token") },
-                placeholder = {
-                    Text(
-                        if (uiState.hasDropboxToken) "Paste a new token to replace the saved one"
-                        else "Paste your Dropbox access token"
-                    )
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                shape = MaterialTheme.shapes.medium,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                ),
-                singleLine = true,
             )
             Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(
-                    onClick = viewModel::saveDropboxToken,
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("settings_save_dropbox_token"),
-                    shape = MaterialTheme.shapes.extraLarge,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                ) {
-                    Text(if (uiState.hasDropboxToken) "Replace token" else "Save token")
-                }
-
-                if (uiState.hasDropboxToken) {
+                val isAuthenticated = uiState.dropboxAuthState.isAuthenticated
+                val isAuthorizing = uiState.dropboxAuthState.isAuthorizing
+                if (isAuthenticated) {
                     OutlinedButton(
-                        onClick = viewModel::removeDropboxToken,
+                        onClick = viewModel::removeDropboxAuth,
                         modifier = Modifier
-                            .weight(1f)
-                            .testTag("settings_remove_dropbox_token"),
+                            .fillMaxWidth()
+                            .testTag("settings_remove_dropbox_auth"),
                         shape = MaterialTheme.shapes.extraLarge,
+                        enabled = !isAuthorizing,
                     ) {
-                        Text("Remove token")
+                        Text("Remove auth")
+                    }
+                } else {
+                    Button(
+                        onClick = viewModel::beginDropboxAuth,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("settings_begin_dropbox_auth"),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        enabled = !isAuthorizing,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                    ) {
+                        Text(if (isAuthorizing) "Waiting for Dropbox..." else "Auth")
                     }
                 }
+            }
+            Spacer(Modifier.height(12.dp))
+            uiState.dropboxAuthState.lastErrorMessage?.let { errorMessage ->
+                Text(
+                    errorMessage,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("settings_dropbox_auth_error"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
             Spacer(Modifier.height(16.dp))
             Text(
@@ -293,9 +279,23 @@ private fun rememberSettingsViewModel(): SettingsViewModel {
     return platformViewModel {
         SettingsViewModel(
             userPreferencesRepository = appContainer.userPreferencesRepository,
-            secureCredentialStore = appContainer.secureCredentialStore,
+            dropboxAuthManager = appContainer.dropboxAuthManager,
             promptSyncStore = appContainer.promptSyncStore,
         )
+    }
+}
+
+private fun dropboxFootnote(uiState: SettingsUiState): String {
+    val authState = uiState.dropboxAuthState
+    return when {
+        authState.isAuthenticated && authState.accountLabel != null ->
+            "Connected to ${authState.accountLabel}. Sync uses the Dropbox app folder, the session is stored securely on this device, and you can remove access anytime."
+        authState.isAuthenticated ->
+            "Dropbox is connected. Sync uses the Dropbox app folder, the session is stored securely on this device, and you can remove access anytime."
+        authState.isAuthorizing ->
+            "Finish the Dropbox approval in your browser, then return to PrompStash."
+        else ->
+            "Connect Dropbox to sync through the app folder. PrompStash stores the auth session securely on this device, and you can remove access anytime."
     }
 }
 

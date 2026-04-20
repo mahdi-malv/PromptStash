@@ -5,6 +5,8 @@ import com.mahdimalv.prompstash.data.local.PromptDatabase
 import com.mahdimalv.prompstash.data.local.PromptDatabaseFileName
 import com.mahdimalv.prompstash.data.settings.UserPreferencesFileName
 import com.mahdimalv.prompstash.data.settings.createPreferencesDataStore
+import com.mahdimalv.prompstash.data.sync.DesktopDropboxAuthorizationRedirectHandler
+import com.mahdimalv.prompstash.data.sync.DesktopExternalUrlLauncher
 import com.mahdimalv.prompstash.data.sync.MacOsKeychainSecureCredentialStore
 import java.nio.file.Files
 import java.nio.file.Path
@@ -35,6 +37,8 @@ fun createAppContainer(
             )
         },
         secureCredentialStore = MacOsKeychainSecureCredentialStore(),
+        externalUrlLauncher = DesktopExternalUrlLauncher(),
+        dropboxAuthorizationRedirectHandler = DesktopDropboxAuthorizationRedirectHandler(),
     )
 }
 
