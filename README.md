@@ -1,12 +1,14 @@
 # Prompt Stash
 A compose multiplatform app to let the user save useful prompts
 
-## Features
+## Tasks
+- [ ] CI deploy
 - [x] Local save/retrieve prompts
 - [x] Basic tags
 - [x] Theme settings
 - [x] Sync
 - [x] Android homescreen widget
+- [ ] UI polish (Font, ColorSystem, so on)
 - [ ] iOS target
 
 ## Dropbox setup
