@@ -91,6 +91,7 @@ data class LibraryUiState(
 
 sealed interface LibraryEvent {
     data class Message(val value: String) : LibraryEvent
+    data object ScrollToTop : LibraryEvent
 }
 
 class PromptLibraryViewModel(
@@ -145,7 +146,11 @@ class PromptLibraryViewModel(
 
     fun onPinToggle(promptId: String) {
         viewModelScope.launch {
+            val isCurrentlyPinned = uiState.value.pinnedPromptIds.contains(promptId)
             userPreferencesRepository.togglePinnedPrompt(promptId)
+            if (!isCurrentlyPinned) {
+                _events.emit(LibraryEvent.ScrollToTop)
+            }
         }
     }
 }

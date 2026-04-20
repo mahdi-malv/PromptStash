@@ -17,9 +17,15 @@ interface PromptDao {
     @Upsert
     suspend fun upsertPrompt(prompt: PromptEntity)
 
+    @Upsert
+    suspend fun upsertPrompts(prompts: List<PromptEntity>)
+
     @Query("SELECT * FROM prompts WHERE id = :id LIMIT 1")
     suspend fun getPromptById(id: String): PromptEntity?
 
     @Query("SELECT * FROM prompts")
     suspend fun getAllPromptEntities(): List<PromptEntity>
+
+    @Query("DELETE FROM prompts")
+    suspend fun deleteAllPrompts()
 }

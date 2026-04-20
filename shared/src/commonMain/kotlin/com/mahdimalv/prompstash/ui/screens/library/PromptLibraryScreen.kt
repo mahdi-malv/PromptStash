@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
@@ -66,6 +67,7 @@ fun PromptLibraryScreen(
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
 
     LaunchedEffect(pendingMessage) {
         if (pendingMessage != null) {
@@ -78,6 +80,7 @@ fun PromptLibraryScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is LibraryEvent.Message -> snackbarHostState.showSnackbar(event.value)
+                LibraryEvent.ScrollToTop -> listState.animateScrollToItem(0)
             }
         }
     }
@@ -200,6 +203,7 @@ fun PromptLibraryScreen(
 
                 else -> {
                     LazyColumn(
+                        state = listState,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(bottom = 24.dp),
                     ) {
