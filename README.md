@@ -1,6 +1,8 @@
 # Prompt Stash
 A compose multiplatform app to let the user save useful prompts
 
+Platform: Android, Desktop, and soon iOS
+
 |Screen1|Screen2|Widget|
 |--|--|--|
 |<img width=400 src="https://github.com/user-attachments/assets/d467a751-c239-4bdf-ac6d-75339bb43ead" />|<img width=400 src="https://github.com/user-attachments/assets/b1cf3581-d421-428b-8aae-eeb89500fdb0" />|<img width=400 src="https://github.com/user-attachments/assets/44ee3e93-a422-4026-ad67-cc2249ec4c3a" />|
