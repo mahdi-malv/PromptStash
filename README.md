@@ -9,17 +9,19 @@ Platform: Android, Desktop, and soon iOS
 
 
 ## Tasks
-- [ ] CI deploy
+- [ ] CI deploy (dropbox personal key needed!)
 - [x] Local save/retrieve prompts
 - [x] Basic tags
 - [x] Theme settings
-- [x] Sync
+- [x] Sync (Dropbox)
 - [x] Android homescreen widget
 - [ ] UI polish (Font, ColorSystem, so on)
 - [ ] iOS target
 
-## Dropbox setup
-Create a Dropbox app in the [Dropbox App Console](https://www.dropbox.com/developers/apps) with:
+
+## Sync
+You can use Dropbox storage to sync your prompts between your platforms.  
+To do that, create a Dropbox app in the [Dropbox App Console](https://www.dropbox.com/developers/apps) with:
 
 - API: `Scoped access`
 - Access: `App folder`
