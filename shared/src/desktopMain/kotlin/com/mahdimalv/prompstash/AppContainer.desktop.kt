@@ -5,6 +5,7 @@ import com.mahdimalv.prompstash.data.local.PromptDatabase
 import com.mahdimalv.prompstash.data.local.PromptDatabaseFileName
 import com.mahdimalv.prompstash.data.settings.UserPreferencesFileName
 import com.mahdimalv.prompstash.data.settings.createPreferencesDataStore
+import com.mahdimalv.prompstash.data.sync.MacOsKeychainSecureCredentialStore
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -33,6 +34,7 @@ fun createAppContainer(
                 producePath = { preferencesPath.absolutePathString() },
             )
         },
+        secureCredentialStore = MacOsKeychainSecureCredentialStore(),
     )
 }
 

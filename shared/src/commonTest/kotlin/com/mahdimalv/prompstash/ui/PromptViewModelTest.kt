@@ -2,6 +2,8 @@ package com.mahdimalv.prompstash.ui
 
 import com.mahdimalv.prompstash.MainDispatcherRule
 import com.mahdimalv.prompstash.data.model.Prompt
+import com.mahdimalv.prompstash.sync.TestPromptSyncStore
+import com.mahdimalv.prompstash.sync.createTestUserPreferencesRepository
 import com.mahdimalv.prompstash.ui.screens.editor.PromptEditorViewModel
 import com.mahdimalv.prompstash.ui.screens.library.PromptLibraryViewModel
 import com.mahdimalv.prompstash.ui.screens.quicksave.QuickSaveViewModel
@@ -51,8 +53,10 @@ class PromptViewModelTest {
                 ),
             )
         )
+        val userPreferencesRepository = createTestUserPreferencesRepository(backgroundScope)
+        val promptSyncStore = TestPromptSyncStore()
 
-        val viewModel = PromptLibraryViewModel(repository)
+        val viewModel = PromptLibraryViewModel(repository, userPreferencesRepository, promptSyncStore)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -124,7 +128,9 @@ class PromptViewModelTest {
                 )
             )
         )
-        val libraryViewModel = PromptLibraryViewModel(repository)
+        val userPreferencesRepository = createTestUserPreferencesRepository(backgroundScope)
+        val promptSyncStore = TestPromptSyncStore()
+        val libraryViewModel = PromptLibraryViewModel(repository, userPreferencesRepository, promptSyncStore)
         val editorViewModel = PromptEditorViewModel(repository)
 
         backgroundScope.launch { libraryViewModel.uiState.collect {} }

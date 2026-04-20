@@ -16,7 +16,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +74,14 @@ fun PromptLibraryScreen(
         }
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is LibraryEvent.Message -> snackbarHostState.showSnackbar(event.value)
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -80,6 +91,25 @@ fun PromptLibraryScreen(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+                },
+                actions = {
+                    IconButton(
+                        onClick = viewModel::onSyncRequested,
+                        enabled = !uiState.isSyncing,
+                        modifier = Modifier.testTag("library_sync"),
+                    ) {
+                        if (uiState.isSyncing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(4.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                Icons.Outlined.Sync,
+                                contentDescription = "Sync prompts",
+                            )
+                        }
+                    }
                 },
             )
         },
@@ -195,7 +225,13 @@ fun PromptLibraryScreen(
 @Composable
 private fun rememberPromptLibraryViewModel(): PromptLibraryViewModel {
     val appContainer = LocalAppContainer.current
-    return platformViewModel { PromptLibraryViewModel(appContainer.promptRepository) }
+    return platformViewModel {
+        PromptLibraryViewModel(
+            repository = appContainer.promptRepository,
+            userPreferencesRepository = appContainer.userPreferencesRepository,
+            promptSyncStore = appContainer.promptSyncStore,
+        )
+    }
 }
 
 @Composable

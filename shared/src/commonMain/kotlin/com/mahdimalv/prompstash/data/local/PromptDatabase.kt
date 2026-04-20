@@ -7,7 +7,7 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [PromptEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @ConstructedBy(PromptDatabaseConstructor::class)

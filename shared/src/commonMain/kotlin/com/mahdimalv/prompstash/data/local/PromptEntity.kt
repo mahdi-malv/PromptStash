@@ -11,4 +11,7 @@ data class PromptEntity(
     val tags: List<String>,
     val createdAt: Long,
     val updatedAt: Long,
+    val deletedAt: Long?,
+    val modifiedAt: Long,
+    val modifiedByDeviceId: String,
 )

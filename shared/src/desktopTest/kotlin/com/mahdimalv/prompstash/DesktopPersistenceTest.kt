@@ -1,6 +1,7 @@
 package com.mahdimalv.prompstash
 
 import com.mahdimalv.prompstash.data.settings.ThemePreference
+import com.mahdimalv.prompstash.data.sync.RemoteType
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,9 @@ class DesktopPersistenceTest {
             preferencesScope = firstScope,
         )
         firstContainer.userPreferencesRepository.setThemePreference(ThemePreference.DARK)
+        firstContainer.userPreferencesRepository.setRemoteType(RemoteType.DROPBOX)
+        firstContainer.userPreferencesRepository.recordSyncSuccess(5L, "Synced 1 prompts")
+        val firstDeviceId = firstContainer.userPreferencesRepository.getOrCreateDeviceId()
         firstContainer.promptRepository.upsertPrompt(
             com.mahdimalv.prompstash.data.model.Prompt(
                 id = "persisted",
@@ -47,6 +51,9 @@ class DesktopPersistenceTest {
         assertEquals("Persistent prompt", restoredPrompt.title)
         assertEquals("Keeps desktop data", restoredPrompt.body)
         assertEquals(ThemePreference.DARK, secondContainer.userPreferencesRepository.themePreference.first())
+        assertEquals(RemoteType.DROPBOX, secondContainer.userPreferencesRepository.remoteType.first())
+        assertEquals(firstDeviceId, secondContainer.userPreferencesRepository.getOrCreateDeviceId())
+        assertEquals("Synced 1 prompts", secondContainer.userPreferencesRepository.syncStatus.first().lastSyncMessage)
         secondScope.cancel()
     }
 }

@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.ksp)
 }
@@ -37,6 +38,7 @@ kotlin {
                 implementation(libs.androidx.sqlite.bundled)
                 implementation(libs.androidx.datastore)
                 implementation(libs.androidx.datastore.preferences)
+                implementation(libs.ktor.client.core)
                 implementation(libs.kotlinx.serialization.json)
             }
         }
@@ -44,6 +46,7 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation(libs.androidx.lifecycle.viewmodel.compose)
+                implementation(libs.ktor.client.okhttp)
             }
         }
 
@@ -58,6 +61,7 @@ kotlin {
         val desktopMain by getting {
             dependencies {
                 implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+                implementation(libs.ktor.client.okhttp)
                 implementation(libs.kotlinx.coroutines.swing)
             }
         }
