@@ -42,7 +42,6 @@ import com.mahdimalv.prompstash.data.settings.ThemePreference
 import com.mahdimalv.prompstash.data.sync.RemoteType
 import com.mahdimalv.prompstash.ui.platformViewModel
 import com.mahdimalv.prompstash.ui.components.FloatingNavBar
-import com.mahdimalv.prompstash.ui.navigation.Editor
 import com.mahdimalv.prompstash.ui.navigation.Library
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +49,6 @@ import com.mahdimalv.prompstash.ui.navigation.Library
 fun SettingsScreen(
     currentDestination: Any?,
     onNavigateToLibrary: () -> Unit,
-    onNavigateToEditor: () -> Unit,
     viewModel: SettingsViewModel = rememberSettingsViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,7 +78,6 @@ fun SettingsScreen(
                 onNavigate = { dest ->
                     when (dest) {
                         is Library -> onNavigateToLibrary()
-                        is Editor -> onNavigateToEditor()
                         else -> Unit
                     }
                 },

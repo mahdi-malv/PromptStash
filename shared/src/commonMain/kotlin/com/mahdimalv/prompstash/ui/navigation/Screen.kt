@@ -1,11 +1,17 @@
 package com.mahdimalv.prompstash.ui.navigation
 
-data object Library
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
 
-data object QuickSave
+sealed interface NavRoute : NavKey
 
+@Serializable
+data object Library : NavRoute
+
+@Serializable
 data class Editor(
     val promptId: String? = null,
-)
+) : NavRoute
 
-data object Settings
+@Serializable
+data object Settings : NavRoute

@@ -6,7 +6,6 @@ import com.mahdimalv.prompstash.data.model.Prompt
 import com.mahdimalv.prompstash.data.model.derivePromptTitle
 import com.mahdimalv.prompstash.data.model.wordCount
 import com.mahdimalv.prompstash.data.repository.PromptRepository
-import com.mahdimalv.prompstash.ui.screens.quicksave.availableTags
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,9 +33,10 @@ data class EditorUiState(
 
 sealed interface EditorEvent {
     data class Message(val value: String) : EditorEvent
-    data object Deleted : EditorEvent
     data object Saved : EditorEvent
 }
+
+val editorTags = listOf("Learning", "Software", "Personal", "Health")
 
 class PromptEditorViewModel(
     private val repository: PromptRepository,
@@ -142,13 +142,5 @@ class PromptEditorViewModel(
         }
     }
 
-    fun delete() {
-        val promptId = _uiState.value.promptId ?: return
-        viewModelScope.launch {
-            repository.deletePrompt(promptId)
-            _events.emit(EditorEvent.Deleted)
-        }
-    }
-
-    fun availableEditorTags(): List<String> = availableTags
+    fun availableEditorTags(): List<String> = editorTags
 }

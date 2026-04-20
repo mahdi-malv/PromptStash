@@ -57,7 +57,6 @@ fun PromptLibraryScreen(
     currentDestination: Any?,
     pendingMessage: String? = null,
     onPendingMessageShown: () -> Unit = {},
-    onNavigateToQuickSave: () -> Unit,
     onNavigateToEditor: () -> Unit,
     onOpenPrompt: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -118,9 +117,9 @@ fun PromptLibraryScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onNavigateToQuickSave,
+                onClick = onNavigateToEditor,
                 icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
-                text = { Text("Quick Save") },
+                text = { Text("New") },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = MaterialTheme.shapes.extraLarge,

@@ -76,6 +76,7 @@ kotlin {
                 implementation(libs.androidx.datastore.preferences)
                 implementation(libs.ktor.client.core)
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.jetbrains.navigation3.ui)
             }
         }
 

@@ -1,83 +1,90 @@
 package com.mahdimalv.prompstash.ui.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.mahdimalv.prompstash.ui.screens.editor.PromptEditorScreen
 import com.mahdimalv.prompstash.ui.screens.library.PromptLibraryScreen
-import com.mahdimalv.prompstash.ui.screens.quicksave.QuickSaveScreen
 import com.mahdimalv.prompstash.ui.screens.settings.SettingsScreen
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 
 @Composable
 fun AppNavigation() {
-    val backStack = remember { mutableStateListOf<Any>(Library) }
-    var pendingLibraryMessage by remember { mutableStateOf<String?>(null) }
-
-    fun navigateTo(destination: Any) {
-        backStack.clear()
-        backStack.add(destination)
-    }
-
-    fun openPrompt(promptId: String) {
-        backStack.add(Editor(promptId))
-    }
-
-    when (val destination = backStack.lastOrNull() ?: Library) {
-        is Library -> {
-            PromptLibraryScreen(
-                currentDestination = destination,
-                pendingMessage = pendingLibraryMessage,
-                onPendingMessageShown = { pendingLibraryMessage = null },
-                onNavigateToQuickSave = { backStack.add(QuickSave) },
-                onNavigateToEditor = { navigateTo(Editor()) },
-                onOpenPrompt = ::openPrompt,
-                onNavigateToSettings = { navigateTo(Settings) },
-            )
-        }
-
-        is QuickSave -> {
-            QuickSaveScreen(
-                onBack = { backStack.removeLastOrNull() },
-                onSaved = {
-                    pendingLibraryMessage = "Prompt saved"
-                    backStack.removeLastOrNull()
-                },
-            )
-        }
-
-        is Editor -> {
-            PromptEditorScreen(
-                promptId = destination.promptId,
-                currentDestination = destination,
-                onNavigateToLibrary = { navigateTo(Library) },
-                onNavigateToSettings = { navigateTo(Settings) },
-                onBack = {
-                    if (backStack.size > 1) {
-                        backStack.removeLastOrNull()
-                    } else {
-                        navigateTo(Library)
-                    }
-                },
-                onPromptDeleted = {
-                    pendingLibraryMessage = "Prompt deleted"
-                    if (backStack.size > 1) {
-                        backStack.removeLastOrNull()
-                    } else {
-                        navigateTo(Library)
-                    }
-                },
-            )
-        }
-
-        is Settings -> {
-            SettingsScreen(
-                currentDestination = destination,
-                onNavigateToLibrary = { navigateTo(Library) },
-                onNavigateToEditor = { navigateTo(Editor()) },
-            )
+    val savedStateConfiguration = remember {
+        SavedStateConfiguration {
+            serializersModule = SerializersModule {
+                polymorphic(NavKey::class) {
+                    subclass(Library.serializer())
+                    subclass(Editor.serializer())
+                    subclass(Settings.serializer())
+                }
+            }
         }
     }
+    val backStack = rememberNavBackStack(savedStateConfiguration, Library)
+    val entryProvider = remember {
+        entryProvider<NavKey> {
+            entry<Library> { library ->
+                PromptLibraryScreen(
+                    currentDestination = library,
+                    onNavigateToEditor = { backStack.add(Editor()) },
+                    onOpenPrompt = { promptId -> backStack.add(Editor(promptId)) },
+                    onNavigateToSettings = {
+                        backStack.removeAll { it is Settings || it is Editor }
+                        if (backStack.lastOrNull() != Settings) {
+                            backStack.add(Settings)
+                        }
+                    },
+                )
+            }
+
+            entry<Editor> { editor ->
+                PromptEditorScreen(
+                    promptId = editor.promptId,
+                    currentDestination = editor,
+                    onNavigateToLibrary = {
+                        backStack.removeAll { it is Settings || it is Editor }
+                        if (backStack.none { it is Library }) {
+                            backStack.add(Library)
+                        }
+                    },
+                    onNavigateToSettings = {
+                        backStack.removeAll { it is Settings }
+                        backStack.add(Settings)
+                    },
+                    onBack = { backStack.removeLastOrNull() },
+                )
+            }
+
+            entry<Settings> { settings ->
+                SettingsScreen(
+                    currentDestination = settings,
+                    onNavigateToLibrary = {
+                        backStack.removeAll { it is Settings || it is Editor }
+                        if (backStack.none { it is Library }) {
+                            backStack.add(Library)
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = { backStack.removeLastOrNull() },
+        entryProvider = entryProvider,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        popTransitionSpec = { fadeIn() togetherWith fadeOut() },
+        predictivePopTransitionSpec = { _ -> fadeIn() togetherWith fadeOut() },
+    )
 }

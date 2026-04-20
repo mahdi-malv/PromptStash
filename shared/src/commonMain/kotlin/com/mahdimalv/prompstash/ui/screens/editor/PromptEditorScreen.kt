@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,7 +60,6 @@ fun PromptEditorScreen(
     onNavigateToLibrary: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onBack: () -> Unit,
-    onPromptDeleted: () -> Unit,
     viewModel: PromptEditorViewModel = rememberPromptEditorViewModel(),
 ) {
     val clipboardManager = LocalClipboardManager.current
@@ -79,7 +75,6 @@ fun PromptEditorScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is EditorEvent.Message -> snackbarHostState.showSnackbar(event.value)
-                EditorEvent.Deleted -> onPromptDeleted()
                 EditorEvent.Saved -> snackbarHostState.showSnackbar("Prompt saved")
             }
         }
@@ -189,16 +184,17 @@ fun PromptEditorScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 viewModel.availableEditorTags().forEach { tag ->
                     FilterChip(
                         selected = uiState.selectedTags.contains(tag),
                         onClick = { viewModel.onTagToggle(tag) },
-                        label = { Text(tag, style = MaterialTheme.typography.labelLarge) },
+                        modifier = Modifier.height(32.dp),
+                        label = { Text(tag, style = MaterialTheme.typography.labelMedium) },
                         shape = MaterialTheme.shapes.extraLarge,
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -213,7 +209,7 @@ fun PromptEditorScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(20.dp))
             Button(
                 onClick = viewModel::save,
                 modifier = Modifier
@@ -226,47 +222,16 @@ fun PromptEditorScreen(
                 ),
                 contentPadding = PaddingValues(vertical = 14.dp),
             ) {
-                Icon(Icons.Outlined.Save, contentDescription = null)
-                Text(" Save prompt", style = MaterialTheme.typography.labelLarge)
+                Text("Save", style = MaterialTheme.typography.labelLarge)
             }
             Spacer(Modifier.height(12.dp))
-            Row(
+            OutlinedButton(
+                onClick = onBack,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                contentPadding = PaddingValues(vertical = 14.dp),
             ) {
-                OutlinedButton(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(uiState.promptBody))
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar("Prompt copied")
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.extraLarge,
-                    contentPadding = PaddingValues(vertical = 14.dp),
-                ) {
-                    Text("Copy", style = MaterialTheme.typography.labelLarge)
-                }
-                if (uiState.isExistingPrompt) {
-                    OutlinedButton(
-                        onClick = viewModel::delete,
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        contentPadding = PaddingValues(vertical = 14.dp),
-                    ) {
-                        Icon(Icons.Outlined.Delete, contentDescription = null)
-                        Text(" Delete", style = MaterialTheme.typography.labelLarge)
-                    }
-                } else {
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        contentPadding = PaddingValues(vertical = 14.dp),
-                    ) {
-                        Text("Cancel", style = MaterialTheme.typography.labelLarge)
-                    }
-                }
+                Text("Cancel", style = MaterialTheme.typography.labelLarge)
             }
             Spacer(Modifier.height(20.dp))
         }

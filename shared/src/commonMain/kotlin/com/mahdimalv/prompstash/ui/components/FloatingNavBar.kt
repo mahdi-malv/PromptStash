@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesomeMotion
-import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.mahdimalv.prompstash.ui.navigation.Editor
 import com.mahdimalv.prompstash.ui.navigation.Library
 import com.mahdimalv.prompstash.ui.navigation.Settings
 
@@ -34,7 +32,6 @@ private data class NavItem(
 
 private val navItems = listOf(
     NavItem("Library", Icons.Outlined.AutoAwesomeMotion, Library),
-    NavItem("Editor", Icons.Outlined.EditNote, Editor()),
     NavItem("Settings", Icons.Outlined.Settings, Settings),
 )
 
