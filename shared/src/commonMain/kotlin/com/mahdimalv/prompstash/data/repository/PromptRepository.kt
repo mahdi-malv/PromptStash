@@ -59,6 +59,7 @@ class SyncingPromptRepository(
     private val delegate: PromptRepository,
     private val syncStore: PromptSyncStore,
     private val appScope: CoroutineScope,
+    private val onPromptDeleted: suspend (String) -> Unit = {},
 ) : PromptRepository {
 
     override fun observePrompts(): Flow<List<Prompt>> = delegate.observePrompts()
@@ -74,6 +75,7 @@ class SyncingPromptRepository(
 
     override suspend fun deletePrompt(id: String) {
         delegate.deletePrompt(id)
+        onPromptDeleted(id)
         appScope.launch {
             syncStore.sync(SyncTrigger.AUTOMATIC)
         }

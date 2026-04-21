@@ -73,6 +73,7 @@ fun createAppContainer(
         ),
         syncStore = syncCoordinator,
         appScope = appScope,
+        onPromptDeleted = userPreferencesRepository::removePinnedPrompt,
     )
 
     return AppContainer(

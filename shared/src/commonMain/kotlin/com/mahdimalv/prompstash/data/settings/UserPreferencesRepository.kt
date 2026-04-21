@@ -112,6 +112,28 @@ class UserPreferencesRepository(
         }
     }
 
+    suspend fun removePinnedPrompt(promptId: String) {
+        var didChange = false
+        dataStore.edit { preferences ->
+            val currentPinnedPromptIds = preferences[PinnedPromptIdsKey]
+                .orEmpty()
+                .split(PinnedPromptIdsSeparator)
+                .map(String::trim)
+                .filter(String::isNotBlank)
+                .take(MaxPinnedPrompts)
+                .toMutableList()
+
+            didChange = currentPinnedPromptIds.remove(promptId)
+            if (didChange) {
+                preferences[PinnedPromptIdsKey] = currentPinnedPromptIds.joinToString(PinnedPromptIdsSeparator)
+            }
+        }
+
+        if (didChange) {
+            onPinnedPromptsChanged()
+        }
+    }
+
     private companion object {
         private const val MaxPinnedPrompts = 3
         private const val PinnedPromptIdsSeparator = "\n"
