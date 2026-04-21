@@ -76,6 +76,7 @@ fun PromptEditorScreen(
             when (event) {
                 is EditorEvent.Message -> snackbarHostState.showSnackbar(event.value)
                 EditorEvent.Saved -> snackbarHostState.showSnackbar("Prompt saved")
+                EditorEvent.Deleted -> onBack()
             }
         }
     }
@@ -232,6 +233,22 @@ fun PromptEditorScreen(
                 contentPadding = PaddingValues(vertical = 14.dp),
             ) {
                 Text("Cancel", style = MaterialTheme.typography.labelLarge)
+            }
+            if (uiState.isExistingPrompt) {
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = viewModel::delete,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("editor_delete"),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                    contentPadding = PaddingValues(vertical = 14.dp),
+                ) {
+                    Text("Delete", style = MaterialTheme.typography.labelLarge)
+                }
             }
             Spacer(Modifier.height(20.dp))
         }

@@ -34,6 +34,7 @@ data class EditorUiState(
 sealed interface EditorEvent {
     data class Message(val value: String) : EditorEvent
     data object Saved : EditorEvent
+    data object Deleted : EditorEvent
 }
 
 val editorTags = listOf("Learning", "Software", "Personal", "Health")
@@ -50,11 +51,13 @@ class PromptEditorViewModel(
 
     private var loadedPromptId: String? = null
     private var observePromptJob: Job? = null
+    private var deletedPromptId: String? = null
 
     fun loadPrompt(promptId: String?) {
         if (loadedPromptId == promptId && (promptId == null || uiState.value.promptId == promptId)) return
 
         loadedPromptId = promptId
+        deletedPromptId = null
         observePromptJob?.cancel()
 
         if (promptId == null) {
@@ -67,7 +70,9 @@ class PromptEditorViewModel(
             repository.observePrompt(promptId).collectLatest { prompt ->
                 if (prompt == null) {
                     _uiState.value = EditorUiState()
-                    _events.emit(EditorEvent.Message("Prompt not found."))
+                    if (deletedPromptId != promptId) {
+                        _events.emit(EditorEvent.Message("Prompt not found."))
+                    }
                 } else {
                     _uiState.value = EditorUiState(
                         promptId = prompt.id,
@@ -139,6 +144,15 @@ class PromptEditorViewModel(
                 )
             }
             _events.emit(EditorEvent.Saved)
+        }
+    }
+
+    fun delete() {
+        val promptId = _uiState.value.promptId ?: return
+        viewModelScope.launch {
+            deletedPromptId = promptId
+            repository.deletePrompt(promptId)
+            _events.emit(EditorEvent.Deleted)
         }
     }
 
