@@ -171,10 +171,10 @@ private fun PromptEntryRow(entry: PromptStashWidgetEntry) {
             ),
             maxLines = 1,
         )
-        Spacer(modifier = GlanceModifier.width(2.dp))
+        Spacer(modifier = GlanceModifier.width(4.dp))
         Box(
             modifier = GlanceModifier
-                .size(18.dp)
+                .size(36.dp)
                 .clickable(
                     actionRunCallback<CopyPromptAction>(
                         actionParametersOf(CopyPromptAction.PromptBodyKey to entry.body)
@@ -185,7 +185,7 @@ private fun PromptEntryRow(entry: PromptStashWidgetEntry) {
             Image(
                 provider = ImageProvider(R.drawable.ic_widget_copy),
                 contentDescription = "Copy prompt",
-                modifier = GlanceModifier.size(16.dp),
+                modifier = GlanceModifier.size(24.dp),
                 contentScale = ContentScale.Fit,
             )
         }
