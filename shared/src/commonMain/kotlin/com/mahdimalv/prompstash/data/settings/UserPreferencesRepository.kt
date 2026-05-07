@@ -6,11 +6,11 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.mahdimalv.prompstash.generateUuidString
 import com.mahdimalv.prompstash.data.sync.RemoteType
 import com.mahdimalv.prompstash.data.sync.SyncStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.util.UUID
 
 class UserPreferencesRepository(
     private val dataStore: DataStore<Preferences>,
@@ -58,7 +58,7 @@ class UserPreferencesRepository(
     suspend fun getOrCreateDeviceId(): String {
         var deviceId = ""
         dataStore.edit { preferences ->
-            deviceId = preferences[DeviceIdKey] ?: UUID.randomUUID().toString().also {
+            deviceId = preferences[DeviceIdKey] ?: generateUuidString().also {
                 preferences[DeviceIdKey] = it
             }
         }

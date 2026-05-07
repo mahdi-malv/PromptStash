@@ -2,6 +2,8 @@ package com.mahdimalv.prompstash.ui.screens.editor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mahdimalv.prompstash.currentTimeMillis
+import com.mahdimalv.prompstash.generateUuidString
 import com.mahdimalv.prompstash.data.model.Prompt
 import com.mahdimalv.prompstash.data.model.derivePromptTitle
 import com.mahdimalv.prompstash.data.model.wordCount
@@ -16,7 +18,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 data class EditorUiState(
     val promptId: String? = null,
@@ -122,8 +123,8 @@ class PromptEditorViewModel(
         }
 
         viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            val promptId = state.promptId ?: UUID.randomUUID().toString()
+            val now = currentTimeMillis()
+            val promptId = state.promptId ?: generateUuidString()
             repository.upsertPrompt(
                 Prompt(
                     id = promptId,

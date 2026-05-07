@@ -9,6 +9,7 @@ import io.ktor.http.Url
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
+import com.mahdimalv.prompstash.currentTimeMillis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,7 +35,7 @@ class DropboxAuthManager(
     private val redirectHandler: DropboxAuthorizationRedirectHandler,
     private val appScope: CoroutineScope,
     private val json: Json = Json { ignoreUnknownKeys = true },
-    private val clock: () -> Long = { System.currentTimeMillis() },
+    private val clock: () -> Long = ::currentTimeMillis,
     private val randomBytes: (Int) -> ByteArray = { size -> ByteArray(size).also(Random::nextBytes) },
 ) {
     private val authMutex = Mutex()

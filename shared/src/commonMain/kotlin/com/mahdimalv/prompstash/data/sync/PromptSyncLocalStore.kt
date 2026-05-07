@@ -1,8 +1,8 @@
 package com.mahdimalv.prompstash.data.sync
 
+import com.mahdimalv.prompstash.platformIoDispatcher
 import com.mahdimalv.prompstash.data.local.PromptDatabase
 import com.mahdimalv.prompstash.data.local.PromptTypeConverters
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 interface PromptSyncLocalStore {
@@ -17,12 +17,12 @@ class RoomPromptSyncLocalStore(
     private val promptDao = database.promptDao()
     private val typeConverters = PromptTypeConverters()
 
-    override suspend fun getAllRecords(): List<PromptSyncRecord> = withContext(Dispatchers.IO) {
+    override suspend fun getAllRecords(): List<PromptSyncRecord> = withContext(platformIoDispatcher()) {
         promptDao.getAllPromptEntities().map { it.toSyncRecord() }
     }
 
     override suspend fun mergeRemoteRecords(remoteRecords: List<PromptSyncRecord>): List<PromptSyncRecord> =
-        withContext(Dispatchers.IO) {
+        withContext(platformIoDispatcher()) {
             val localRecords = database.useConnection(isReadOnly = true) { connection ->
                 connection.usePrepared(SELECT_ALL_PROMPTS_SQL) { statement ->
                     statement.readPromptSyncRecords()

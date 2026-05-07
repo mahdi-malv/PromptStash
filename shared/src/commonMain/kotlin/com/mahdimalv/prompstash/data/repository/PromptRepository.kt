@@ -5,6 +5,7 @@ import com.mahdimalv.prompstash.data.local.PromptEntity
 import com.mahdimalv.prompstash.data.model.Prompt
 import com.mahdimalv.prompstash.data.sync.PromptSyncStore
 import com.mahdimalv.prompstash.data.sync.SyncTrigger
+import com.mahdimalv.prompstash.currentTimeMillis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
@@ -42,7 +43,7 @@ class RoomPromptRepository(
 
     override suspend fun deletePrompt(id: String) {
         val existingPrompt = promptDao.getPromptById(id) ?: return
-        val now = System.currentTimeMillis()
+        val now = currentTimeMillis()
         promptDao.upsertPrompt(
             existingPrompt.copy(
                 updatedAt = now,

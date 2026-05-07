@@ -53,6 +53,9 @@ kotlin {
     }
 
     jvm("desktop")
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
@@ -77,6 +80,7 @@ kotlin {
                 implementation(libs.ktor.client.core)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.jetbrains.navigation3.ui)
+                implementation(libs.jetbrains.lifecycle.runtime.compose)
             }
         }
 
@@ -103,6 +107,26 @@ kotlin {
             }
         }
 
+        val iosMain by creating {
+            dependsOn(commonMain)
+            dependencies {
+                implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+                implementation(libs.ktor.client.darwin)
+            }
+        }
+
+        val iosX64Main by getting {
+            dependsOn(iosMain)
+        }
+
+        val iosArm64Main by getting {
+            dependsOn(iosMain)
+        }
+
+        val iosSimulatorArm64Main by getting {
+            dependsOn(iosMain)
+        }
+
         val desktopTest by getting {
             dependencies {
                 implementation(libs.junit)
@@ -114,6 +138,9 @@ kotlin {
 dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspDesktop", libs.androidx.room.compiler)
+    add("kspIosX64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }
 
 tasks.configureEach {

@@ -63,6 +63,7 @@ fun PromptLibraryScreen(
     viewModel: PromptLibraryViewModel = rememberPromptLibraryViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val supportsRemoteSync = LocalAppContainer.current.platformCapabilities.supportsRemoteSync
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -95,21 +96,23 @@ fun PromptLibraryScreen(
                     )
                 },
                 actions = {
-                    IconButton(
-                        onClick = viewModel::onSyncRequested,
-                        enabled = !uiState.isSyncing,
-                        modifier = Modifier.testTag("library_sync"),
-                    ) {
-                        if (uiState.isSyncing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.padding(4.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Icon(
-                                Icons.Outlined.Sync,
-                                contentDescription = "Sync prompts",
-                            )
+                    if (supportsRemoteSync) {
+                        IconButton(
+                            onClick = viewModel::onSyncRequested,
+                            enabled = !uiState.isSyncing,
+                            modifier = Modifier.testTag("library_sync"),
+                        ) {
+                            if (uiState.isSyncing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.padding(4.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Outlined.Sync,
+                                    contentDescription = "Sync prompts",
+                                )
+                            }
                         }
                     }
                 },

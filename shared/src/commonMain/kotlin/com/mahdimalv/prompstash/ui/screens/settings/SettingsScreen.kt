@@ -52,6 +52,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = rememberSettingsViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val supportsRemoteSync = LocalAppContainer.current.platformCapabilities.supportsRemoteSync
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
@@ -153,113 +154,115 @@ fun SettingsScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(32.dp))
-            Icon(
-                Icons.Outlined.Sync,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                "Remote Sync",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Choose a remote provider and connect Dropbox securely for sync.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                RemoteType.entries.forEach { remoteType ->
-                    AssistChip(
-                        onClick = { viewModel.onRemoteTypeSelected(remoteType) },
-                        label = {
-                            Text(
-                                when (remoteType) {
-                                    RemoteType.NONE -> "None"
-                                    RemoteType.DROPBOX -> "Dropbox"
-                                }
-                            )
-                        },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = if (uiState.selectedRemote == remoteType) {
-                                MaterialTheme.colorScheme.primaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHigh
+            if (supportsRemoteSync) {
+                Spacer(Modifier.height(32.dp))
+                Icon(
+                    Icons.Outlined.Sync,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Remote Sync",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Choose a remote provider and connect Dropbox securely for sync.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(16.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    RemoteType.entries.forEach { remoteType ->
+                        AssistChip(
+                            onClick = { viewModel.onRemoteTypeSelected(remoteType) },
+                            label = {
+                                Text(
+                                    when (remoteType) {
+                                        RemoteType.NONE -> "None"
+                                        RemoteType.DROPBOX -> "Dropbox"
+                                    }
+                                )
                             },
-                            labelColor = if (uiState.selectedRemote == remoteType) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            },
-                        ),
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = if (uiState.selectedRemote == remoteType) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                },
+                                labelColor = if (uiState.selectedRemote == remoteType) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                            ),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    dropboxFootnote(uiState),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    val isAuthenticated = uiState.dropboxAuthState.isAuthenticated
+                    val isAuthorizing = uiState.dropboxAuthState.isAuthorizing
+                    if (isAuthenticated) {
+                        OutlinedButton(
+                            onClick = viewModel::removeDropboxAuth,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("settings_remove_dropbox_auth"),
+                            shape = MaterialTheme.shapes.extraLarge,
+                            enabled = !isAuthorizing,
+                        ) {
+                            Text("Remove auth")
+                        }
+                    } else {
+                        Button(
+                            onClick = viewModel::beginDropboxAuth,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("settings_begin_dropbox_auth"),
+                            shape = MaterialTheme.shapes.extraLarge,
+                            enabled = !isAuthorizing,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                        ) {
+                            Text(if (isAuthorizing) "Waiting for Dropbox..." else "Auth")
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                uiState.dropboxAuthState.lastErrorMessage?.let { errorMessage ->
+                    Text(
+                        errorMessage,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("settings_dropbox_auth_error"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                dropboxFootnote(uiState),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                val isAuthenticated = uiState.dropboxAuthState.isAuthenticated
-                val isAuthorizing = uiState.dropboxAuthState.isAuthorizing
-                if (isAuthenticated) {
-                    OutlinedButton(
-                        onClick = viewModel::removeDropboxAuth,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("settings_remove_dropbox_auth"),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        enabled = !isAuthorizing,
-                    ) {
-                        Text("Remove auth")
-                    }
-                } else {
-                    Button(
-                        onClick = viewModel::beginDropboxAuth,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("settings_begin_dropbox_auth"),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        enabled = !isAuthorizing,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                    ) {
-                        Text(if (isAuthorizing) "Waiting for Dropbox..." else "Auth")
-                    }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            uiState.dropboxAuthState.lastErrorMessage?.let { errorMessage ->
+                Spacer(Modifier.height(16.dp))
                 Text(
-                    errorMessage,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("settings_dropbox_auth_error"),
+                    syncStatusText(uiState),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                syncStatusText(uiState),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             Spacer(Modifier.height(24.dp))
             Text(
                 "Version 1.0",

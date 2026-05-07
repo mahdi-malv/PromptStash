@@ -1,6 +1,7 @@
 package com.mahdimalv.prompstash.data.sync
 
 import com.mahdimalv.prompstash.data.settings.UserPreferencesRepository
+import com.mahdimalv.prompstash.currentTimeMillis
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +14,7 @@ class PromptSyncCoordinator(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val dropboxAuthManager: DropboxAuthManager,
     remotes: List<PromptSyncRemote>,
-    private val clock: () -> Long = { System.currentTimeMillis() },
+    private val clock: () -> Long = ::currentTimeMillis,
 ) : PromptSyncStore {
 
     private val remotesByType = remotes.associateBy(PromptSyncRemote::remoteType)

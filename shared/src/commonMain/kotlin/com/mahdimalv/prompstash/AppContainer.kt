@@ -29,6 +29,7 @@ class AppContainer(
     val promptSyncStore: PromptSyncStore,
     val secureCredentialStore: SecureCredentialStore,
     val dropboxAuthManager: DropboxAuthManager,
+    val platformCapabilities: PlatformCapabilities,
 )
 
 fun createAppContainer(
@@ -40,6 +41,7 @@ fun createAppContainer(
     appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     onPromptsChanged: suspend () -> Unit = {},
     onPinnedPromptsChanged: suspend () -> Unit = {},
+    platformCapabilities: PlatformCapabilities = PlatformCapabilities(supportsRemoteSync = true),
 ): AppContainer {
     val database = buildPromptDatabase(databaseBuilder)
     val userPreferencesRepository = UserPreferencesRepository(
@@ -82,6 +84,7 @@ fun createAppContainer(
         promptSyncStore = syncCoordinator,
         secureCredentialStore = secureCredentialStore,
         dropboxAuthManager = dropboxAuthManager,
+        platformCapabilities = platformCapabilities,
     )
 }
 

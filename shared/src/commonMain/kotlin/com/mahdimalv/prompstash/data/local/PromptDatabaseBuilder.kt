@@ -6,7 +6,7 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import kotlinx.coroutines.Dispatchers
+import com.mahdimalv.prompstash.platformIoDispatcher
 
 const val PromptDatabaseFileName = "prompstash.db"
 
@@ -15,7 +15,7 @@ fun buildPromptDatabase(
 ): PromptDatabase = builder
     .addMigrations(promptDatabaseMigration1To2())
     .setDriver(BundledSQLiteDriver())
-    .setQueryCoroutineContext(Dispatchers.IO)
+    .setQueryCoroutineContext(platformIoDispatcher())
     .build()
 
 private fun promptDatabaseMigration1To2(): Migration = object : Migration(1, 2) {
