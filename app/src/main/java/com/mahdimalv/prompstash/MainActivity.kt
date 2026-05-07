@@ -16,7 +16,8 @@ class MainActivity : ComponentActivity() {
     private val appContainer: AppContainer by lazy(LazyThreadSafetyMode.NONE) {
         createAppContainer(
             context = applicationContext,
-            onPromptsChanged = { PromptStashWidgetUpdater.enqueue(applicationContext) },
+            onPromptsChanged = { PromptStashWidgetUpdater.update(applicationContext) },
+            onPinnedPromptsChanged = { PromptStashWidgetUpdater.update(applicationContext) },
         )
     }
 
@@ -46,7 +47,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 appContainer.userPreferencesRepository.pinnedPromptIds.collect {
-                    PromptStashWidgetUpdater.enqueue(applicationContext)
+                    PromptStashWidgetUpdater.update(applicationContext)
                 }
             }
         }

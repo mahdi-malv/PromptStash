@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -43,11 +44,6 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.work.CoroutineWorker
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.WorkerParameters
 import com.mahdimalv.prompstash.AndroidAppSingletons
 import com.mahdimalv.prompstash.MainActivity
 import com.mahdimalv.prompstash.R
@@ -70,24 +66,8 @@ class PromptStashWidgetReceiver : GlanceAppWidgetReceiver() {
 }
 
 internal object PromptStashWidgetUpdater {
-    private const val UPDATE_WORK_NAME = "prompt_stash_widget_update"
-
-    fun enqueue(context: Context) {
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            UPDATE_WORK_NAME,
-            ExistingWorkPolicy.REPLACE,
-            OneTimeWorkRequestBuilder<PromptStashWidgetUpdateWorker>().build(),
-        )
-    }
-}
-
-class PromptStashWidgetUpdateWorker(
-    appContext: Context,
-    workerParameters: WorkerParameters,
-) : CoroutineWorker(appContext, workerParameters) {
-    override suspend fun doWork(): Result {
-        PromptStashWidget().updateAll(applicationContext)
-        return Result.success()
+    suspend fun update(context: Context) {
+        PromptStashWidget().updateAll(context.applicationContext)
     }
 }
 
@@ -187,6 +167,9 @@ private fun PromptEntryRow(entry: PromptStashWidgetEntry) {
                 contentDescription = "Copy prompt",
                 modifier = GlanceModifier.size(24.dp),
                 contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(
+                    ColorProvider(day = Color(0xFF111318), night = Color(0xFFE3E2E6)),
+                ),
             )
         }
     }
