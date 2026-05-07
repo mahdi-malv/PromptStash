@@ -135,7 +135,7 @@ private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
 
         if (visibleEntries.isEmpty()) {
             Text(
-                text = "Pin prompts in the app",
+                text = "Add prompts in the app",
                 style = TextStyle(
                     color = ColorProvider(day = Color(0xFF5E5F63), night = Color(0xFFC6C6CA)),
                     fontSize = 14.sp,
@@ -192,10 +192,11 @@ private fun PromptEntryRow(entry: PromptStashWidgetEntry) {
     }
 }
 
-private fun maxVisibleEntries(heightDp: Float): Int = when {
-    heightDp < 96f -> 1
-    heightDp < 138f -> 2
-    else -> 3
+private const val MAX_WIDGET_ENTRIES = 10
+
+private fun maxVisibleEntries(heightDp: Float): Int {
+    val capacity = ((heightDp - 54f) / 42f).toInt() + 1
+    return capacity.coerceIn(1, MAX_WIDGET_ENTRIES)
 }
 
 private data class PromptStashWidgetData(
@@ -222,26 +223,33 @@ private object PromptStashWidgetDataStore {
             .filter(String::isNotBlank)
             .take(MAX_PINNED_PROMPTS)
 
-        if (pinnedPromptIds.isEmpty()) {
+        val activePrompts = AndroidAppSingletons.promptDatabase(appContext)
+            .promptDao()
+            .getAllPromptEntities()
+            .filter { it.deletedAt == null }
+
+        if (activePrompts.isEmpty()) {
             return PromptStashWidgetData(entries = emptyList())
         }
 
-        val promptsById = AndroidAppSingletons.promptDatabase(appContext)
-            .promptDao()
-            .getAllPromptEntities()
+        val promptsById = activePrompts.associateBy { it.id }
+        val orderedPinnedPrompts = pinnedPromptIds.mapNotNull(promptsById::get)
+        val pinnedIdSet = orderedPinnedPrompts.map { it.id }.toSet()
+        val orderedUnpinnedPrompts = activePrompts
             .asSequence()
-            .filter { it.deletedAt == null }
-            .associateBy { it.id }
+            .filterNot { it.id in pinnedIdSet }
+            .sortedByDescending { it.updatedAt }
 
-        return PromptStashWidgetData(
-            entries = pinnedPromptIds.mapNotNull { promptId ->
-                promptsById[promptId]?.let { prompt ->
-                    PromptStashWidgetEntry(
-                        title = prompt.title,
-                        body = prompt.body,
-                    )
-                }
+        val entries = (orderedPinnedPrompts.asSequence() + orderedUnpinnedPrompts)
+            .take(MAX_WIDGET_ENTRIES)
+            .map { prompt ->
+                PromptStashWidgetEntry(
+                    title = prompt.title,
+                    body = prompt.body,
+                )
             }
-        )
+            .toList()
+
+        return PromptStashWidgetData(entries = entries)
     }
 }
