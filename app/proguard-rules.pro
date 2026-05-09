@@ -1,5 +1,12 @@
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 
+# WorkManager instantiates InputMerger subclasses via reflection (Class.newInstance()).
+# Without this rule, R8 strips the no-arg constructor and Glance's SessionWorker fails
+# to start, leaving the widget stuck on its placeholder layout.
+-keep class * extends androidx.work.InputMerger {
+    <init>();
+}
+
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
