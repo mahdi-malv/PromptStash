@@ -75,7 +75,7 @@ fun PromptEditorScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is EditorEvent.Message -> snackbarHostState.showSnackbar(event.value)
-                EditorEvent.Saved -> snackbarHostState.showSnackbar("Prompt saved")
+                EditorEvent.Saved -> onBack()
                 EditorEvent.Deleted -> onBack()
             }
         }

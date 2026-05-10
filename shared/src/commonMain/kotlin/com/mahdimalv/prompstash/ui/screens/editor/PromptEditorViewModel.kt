@@ -135,15 +135,7 @@ class PromptEditorViewModel(
                     updatedAt = now,
                 )
             )
-            _uiState.update {
-                it.copy(
-                    promptId = promptId,
-                    title = it.title.trim().ifBlank { derivePromptTitle(body) },
-                    promptBody = body,
-                    createdAt = it.createdAt ?: now,
-                    isExistingPrompt = true,
-                )
-            }
+            resetState()
             _events.emit(EditorEvent.Saved)
         }
     }
@@ -153,8 +145,16 @@ class PromptEditorViewModel(
         viewModelScope.launch {
             deletedPromptId = promptId
             repository.deletePrompt(promptId)
+            resetState()
             _events.emit(EditorEvent.Deleted)
         }
+    }
+
+    private fun resetState() {
+        observePromptJob?.cancel()
+        observePromptJob = null
+        loadedPromptId = null
+        _uiState.value = EditorUiState()
     }
 
     fun availableEditorTags(): List<String> = editorTags
