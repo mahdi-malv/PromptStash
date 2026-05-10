@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -13,7 +14,6 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
-import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.clickable
 import androidx.glance.action.actionParametersOf
@@ -24,6 +24,8 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import androidx.glance.background
@@ -89,15 +91,12 @@ class CopyPromptAction : ActionCallback {
 
 @Composable
 private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
-    val size = LocalSize.current
-    val visibleEntries = widgetData.entries.take(maxVisibleEntries(size.height.value))
-
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
             .background(ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF1B1B1F)))
-            .padding(12.dp),
+            .padding(16.dp),
         verticalAlignment = Alignment.Vertical.Top,
         horizontalAlignment = Alignment.Horizontal.Start,
     ) {
@@ -113,7 +112,7 @@ private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
 
-        if (visibleEntries.isEmpty()) {
+        if (widgetData.entries.isEmpty()) {
             Text(
                 text = "Add prompts in the app",
                 style = TextStyle(
@@ -123,10 +122,22 @@ private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
                 maxLines = 2,
             )
         } else {
-            visibleEntries.forEachIndexed { index, entry ->
-                PromptEntryRow(entry)
-                if (index != visibleEntries.lastIndex) {
-                    Spacer(modifier = GlanceModifier.height(2.dp))
+            LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
+                items(widgetData.entries) { entry ->
+                    Column {
+                        PromptEntryRow(entry)
+                        Spacer(
+                            modifier = GlanceModifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(
+                                    ColorProvider(
+                                        day = Color(0x7A5E5F63),
+                                        night = Color(0x74C6C6CA)
+                                    )
+                                )
+                        )
+                    }
                 }
             }
         }
@@ -165,7 +176,7 @@ private fun PromptEntryRow(entry: PromptStashWidgetEntry) {
             Image(
                 provider = ImageProvider(R.drawable.ic_widget_copy),
                 contentDescription = "Copy prompt",
-                modifier = GlanceModifier.size(24.dp),
+                modifier = GlanceModifier.size(28.dp),
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(
                     ColorProvider(day = Color(0xFF111318), night = Color(0xFFE3E2E6)),
@@ -175,12 +186,7 @@ private fun PromptEntryRow(entry: PromptStashWidgetEntry) {
     }
 }
 
-private const val MAX_WIDGET_ENTRIES = 10
-
-private fun maxVisibleEntries(heightDp: Float): Int {
-    val capacity = ((heightDp - 54f) / 42f).toInt() + 1
-    return capacity.coerceIn(1, MAX_WIDGET_ENTRIES)
-}
+private const val MAX_WIDGET_ENTRIES = 100
 
 private data class PromptStashWidgetData(
     val entries: List<PromptStashWidgetEntry>,
