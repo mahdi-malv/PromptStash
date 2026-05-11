@@ -7,6 +7,13 @@
     <init>();
 }
 
+# Glance instantiates ActionCallback implementations reflectively from the class name
+# stored in actionRunCallback<T>(...). Without this, R8 renames CopyPromptAction in
+# release and the widget's copy button silently does nothing.
+-keep class * implements androidx.glance.appwidget.action.ActionCallback {
+    <init>();
+}
+
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
