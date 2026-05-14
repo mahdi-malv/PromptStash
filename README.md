@@ -1,7 +1,9 @@
 # Prompt Stash
-A compose multiplatform app to let the user save useful prompts. Supports syncing through `Dropbox`
-
-Platform: Android, Desktop, and soon iOS
+A compose multiplatform app to let the user save useful prompts.
+### Features
+- Supports syncing through `Dropbox`.
+- Android homescreen widget
+- **Platform**: Android, Desktop, and soon iOS
 
 |Dark|Light|
 |--|--|
