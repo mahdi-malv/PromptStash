@@ -50,10 +50,10 @@ fun FloatingNavBar(
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shadowElevation = 2.dp,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f),
+            shadowElevation = 0.dp,
             tonalElevation = 0.dp,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

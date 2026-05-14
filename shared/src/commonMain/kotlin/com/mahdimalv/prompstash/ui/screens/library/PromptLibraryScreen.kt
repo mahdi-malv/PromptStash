@@ -40,6 +40,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -56,7 +58,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -84,6 +88,9 @@ fun PromptLibraryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val density = LocalDensity.current
+    var navBarHeight by remember { mutableStateOf(0.dp) }
+    var topBarHeight by remember { mutableStateOf(0.dp) }
 
     val isScrolled by remember {
         derivedStateOf {
@@ -149,136 +156,61 @@ fun PromptLibraryScreen(
 
     Scaffold(
         modifier = Modifier.systemBarsPadding(),
-        topBar = {
-            Column {
-                AnimatedVisibility(
-                    visible = !isScrolled,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
-                ) {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                "PrompStash",
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        },
-                        actions = { syncAction() },
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 8.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextField(
-                        value = uiState.searchQuery,
-                        onValueChange = viewModel::onSearchQueryChange,
-                        placeholder = {
-                            Text(
-                                "Search prompts…",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Outlined.Search,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("library_search"),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                        ),
-                        singleLine = true,
-                    )
-                    AnimatedVisibility(
-                        visible = isScrolled,
-                        enter = expandHorizontally() + fadeIn(),
-                        exit = shrinkHorizontally() + fadeOut(),
-                    ) {
-                        syncAction()
-                    }
-                }
-            }
-        },
-        floatingActionButton = {
-            AnimatedVisibility(
-                visible = showFab,
-                enter = scaleIn() + fadeIn() + slideInHorizontally { it },
-                exit = scaleOut() + fadeOut() + slideOutHorizontally { it },
-            ) {
-                ExtendedFloatingActionButton(
-                    onClick = onNavigateToEditor,
-                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
-                    text = { Text("New") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = MaterialTheme.shapes.extraLarge,
-                )
-            }
-        },
-        bottomBar = {
-            FloatingNavBar(
-                currentDestination = currentDestination,
-                onNavigate = { dest ->
-                    when (dest) {
-                        is com.mahdimalv.prompstash.ui.navigation.Editor -> onNavigateToEditor()
-                        is com.mahdimalv.prompstash.ui.navigation.Settings -> onNavigateToSettings()
-                        else -> Unit
-                    }
-                },
-            )
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surface,
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-        ) {
-            Text(
-                if (uiState.searchQuery.isBlank()) "All prompts" else "Search results",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(12.dp))
-
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             when {
                 uiState.isEmpty -> {
-                    EmptyState(
-                        title = "Your stash is empty.",
-                        description = "Stash your first prompt to reuse it anywhere.",
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = topBarHeight, bottom = navBarHeight)
+                            .padding(horizontal = 16.dp),
+                    ) {
+                        EmptyState(
+                            title = "Your stash is empty.",
+                            description = "Stash your first prompt to reuse it anywhere.",
+                        )
+                    }
                 }
 
                 uiState.hasNoSearchResults -> {
-                    EmptyState(
-                        title = "No matching prompts",
-                        description = "Try a different word from the title, body, or tags.",
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = topBarHeight, bottom = navBarHeight)
+                            .padding(horizontal = 16.dp),
+                    ) {
+                        EmptyState(
+                            title = "No matching prompts",
+                            description = "Try a different word from the title, body, or tags.",
+                        )
+                    }
                 }
 
                 else -> {
                     LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
                         state = listState,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 24.dp),
+                        contentPadding = PaddingValues(
+                            top = topBarHeight,
+                            bottom = 24.dp + navBarHeight,
+                        ),
                     ) {
+                        item(key = "__section_header__") {
+                            Column {
+                                Text(
+                                    if (uiState.searchQuery.isBlank()) "All prompts" else "Search results",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Spacer(Modifier.height(12.dp))
+                            }
+                        }
                         items(
                             items = uiState.filteredPrompts,
                             key = { it.prompt.id },
@@ -300,6 +232,114 @@ fun PromptLibraryScreen(
                     }
                 }
             }
+            Surface(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        topBarHeight = with(density) { size.height.toDp() }
+                    },
+            ) {
+                Column {
+                    AnimatedVisibility(
+                        visible = !isScrolled,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut(),
+                    ) {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    "PrompStash",
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                            },
+                            actions = { syncAction() },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color.Transparent,
+                            ),
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextField(
+                            value = uiState.searchQuery,
+                            onValueChange = viewModel::onSearchQueryChange,
+                            placeholder = {
+                                Text(
+                                    "Search prompts…",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Search,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("library_search"),
+                            shape = MaterialTheme.shapes.medium,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent,
+                            ),
+                            singleLine = true,
+                        )
+                        AnimatedVisibility(
+                            visible = isScrolled,
+                            enter = expandHorizontally() + fadeIn(),
+                            exit = shrinkHorizontally() + fadeOut(),
+                        ) {
+                            syncAction()
+                        }
+                    }
+                }
+            }
+            AnimatedVisibility(
+                visible = showFab,
+                enter = scaleIn() + fadeIn() + slideInHorizontally { it },
+                exit = scaleOut() + fadeOut() + slideOutHorizontally { it },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = navBarHeight),
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToEditor,
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    text = { Text("New") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = MaterialTheme.shapes.extraLarge,
+                )
+            }
+            FloatingNavBar(
+                currentDestination = currentDestination,
+                onNavigate = { dest ->
+                    when (dest) {
+                        is com.mahdimalv.prompstash.ui.navigation.Editor -> onNavigateToEditor()
+                        is com.mahdimalv.prompstash.ui.navigation.Settings -> onNavigateToSettings()
+                        else -> Unit
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { size ->
+                        navBarHeight = with(density) { size.height.toDp() }
+                    },
+            )
         }
     }
 }
