@@ -3,9 +3,11 @@ A compose multiplatform app to let the user save useful prompts
 
 Platform: Android, Desktop, and soon iOS
 
-|Screen1|Screen2|Widget|
-|--|--|--|
-|<img width=400 src="https://github.com/user-attachments/assets/d467a751-c239-4bdf-ac6d-75339bb43ead" />|<img width=400 src="https://github.com/user-attachments/assets/b1cf3581-d421-428b-8aae-eeb89500fdb0" />|<img width=400 src="https://github.com/user-attachments/assets/44ee3e93-a422-4026-ad67-cc2249ec4c3a" />|
+|Dark|Light|
+|--|--|
+|<img width="500"  alt="image" src="https://github.com/user-attachments/assets/108202e2-8c3f-44e6-9fc0-c6493918c090" />|<img width="500"  alt="image" src="https://github.com/user-attachments/assets/fb499d90-8bd0-42e5-8391-e107f9cdfaee" />|
+|<img width="237" alt="image" src="https://github.com/user-attachments/assets/f4a80f92-07f8-41bf-afa8-9a282de671c6" />|<img width="249"  alt="image" src="https://github.com/user-attachments/assets/5c298254-aca6-4139-8de0-ef5f6116630d" />|
+
 
 
 ## Tasks
