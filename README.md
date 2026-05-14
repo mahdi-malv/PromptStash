@@ -11,7 +11,7 @@ Platform: Android, Desktop, and soon iOS
 
 
 ## Tasks
-- [ ] CI deploy (dropbox personal key needed!)
+- [ ] CI release 
 - [x] Local save/retrieve prompts
 - [x] Basic tags
 - [x] Theme settings
