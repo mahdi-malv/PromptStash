@@ -1,5 +1,6 @@
 package com.mahdimalv.prompstash.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.PushPin
@@ -22,9 +24,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mahdimalv.prompstash.data.model.Prompt
+import com.mahdimalv.prompstash.ui.theme.PinnedCardShape
 
 @Composable
 fun PromptCard(
@@ -36,20 +40,28 @@ fun PromptCard(
     onCopy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val contentPadding = if (isPinned) 12.dp else 16.dp
+    val contentPadding = 16.dp
     val bodyMaxLines = if (isPinned) 2 else 3
     val titleMaxLines = if (isPinned) 1 else 2
     val showMetadata = !isPinned
     val visibleTags = if (isPinned) prompt.tags.take(2) else prompt.tags
 
+    val shape: Shape = if (isPinned) PinnedCardShape else MaterialTheme.shapes.large
+    val containerColor = if (isPinned) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+        shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = containerColor,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(modifier = Modifier.padding(contentPadding)) {
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -76,7 +88,7 @@ fun PromptCard(
             Spacer(Modifier.height(if (isPinned) 4.dp else 8.dp))
             Text(
                 text = prompt.body,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = bodyMaxLines,
                 overflow = TextOverflow.Ellipsis,
@@ -94,17 +106,18 @@ fun PromptCard(
                 Row(modifier = Modifier.fillMaxWidth()) {
                     FlowRow(
                         modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         visibleTags.forEach { tag ->
                             FilterChip(
                                 selected = false,
                                 onClick = onClick,
                                 label = { Text(tag, style = MaterialTheme.typography.labelSmall) },
+                                shape = RoundedCornerShape(percent = 50),
                                 colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 ),
                                 border = null,
                             )

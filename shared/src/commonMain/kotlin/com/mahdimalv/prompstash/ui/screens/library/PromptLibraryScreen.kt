@@ -91,7 +91,7 @@ fun PromptLibraryScreen(
                 title = {
                     Text(
                         "PrompStash",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
@@ -155,7 +155,7 @@ fun PromptLibraryScreen(
                 onValueChange = viewModel::onSearchQueryChange,
                 placeholder = {
                     Text(
-                        "Search title, prompt text, or tags",
+                        "Search prompts…",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -170,10 +170,10 @@ fun PromptLibraryScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("library_search"),
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = MaterialTheme.shapes.medium,
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
@@ -182,8 +182,8 @@ fun PromptLibraryScreen(
             )
             Spacer(Modifier.height(20.dp))
             Text(
-                if (uiState.searchQuery.isBlank()) "Your prompts" else "Search results",
-                style = MaterialTheme.typography.headlineSmall,
+                if (uiState.searchQuery.isBlank()) "All prompts" else "Search results",
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(12.dp))
@@ -191,8 +191,8 @@ fun PromptLibraryScreen(
             when {
                 uiState.isEmpty -> {
                     EmptyState(
-                        title = "No prompts yet",
-                        description = "Save your first agent prompt to build a reusable library.",
+                        title = "Your stash is empty.",
+                        description = "Stash your first prompt to reuse it anywhere.",
                     )
                 }
 
@@ -262,7 +262,7 @@ private fun EmptyState(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(

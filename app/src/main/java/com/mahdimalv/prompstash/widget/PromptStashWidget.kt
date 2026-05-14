@@ -95,7 +95,7 @@ private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
         modifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
-            .background(ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF1B1B1F)))
+            .background(ColorProvider(day = Color(0xFFF3EEE4), night = Color(0xFF23201B)))
             .padding(16.dp),
         verticalAlignment = Alignment.Vertical.Top,
         horizontalAlignment = Alignment.Horizontal.Start,
@@ -104,7 +104,7 @@ private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
             text = "PromptStash",
             modifier = GlanceModifier.clickable(actionStartActivity<MainActivity>()),
             style = TextStyle(
-                color = ColorProvider(day = Color(0xFF111318), night = Color(0xFFE3E2E6)),
+                color = ColorProvider(day = Color(0xFF1F1B16), night = Color(0xFFEFE9DC)),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
             ),
@@ -116,7 +116,7 @@ private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
             Text(
                 text = "Add prompts in the app",
                 style = TextStyle(
-                    color = ColorProvider(day = Color(0xFF5E5F63), night = Color(0xFFC6C6CA)),
+                    color = ColorProvider(day = Color(0xFF6B645A), night = Color(0xFFA39C8E)),
                     fontSize = 14.sp,
                 ),
                 maxLines = 2,
@@ -132,8 +132,8 @@ private fun PromptStashWidgetContent(widgetData: PromptStashWidgetData) {
                                 .height(1.dp)
                                 .background(
                                     ColorProvider(
-                                        day = Color(0x7A5E5F63),
-                                        night = Color(0x74C6C6CA)
+                                        day = Color(0x55C7BFAE),
+                                        night = Color(0x55544E43)
                                     )
                                 )
                         )
@@ -157,7 +157,7 @@ private fun PromptEntryRow(entry: PromptStashWidgetEntry) {
                 .defaultWeight()
                 .clickable(actionStartActivity<MainActivity>()),
             style = TextStyle(
-                color = ColorProvider(day = Color(0xFF111318), night = Color(0xFFE3E2E6)),
+                color = ColorProvider(day = Color(0xFF1F1B16), night = Color(0xFFEFE9DC)),
                 fontSize = 18.sp,
             ),
             maxLines = 1,

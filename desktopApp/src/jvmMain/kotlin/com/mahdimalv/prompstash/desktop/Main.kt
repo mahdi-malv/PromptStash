@@ -1,6 +1,7 @@
 package com.mahdimalv.prompstash.desktop
 
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -14,6 +15,7 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "PrompStash",
+        icon = painterResource("icon.png"),
         state = rememberWindowState(width = 400.dp, height = 840.dp),
     ) {
         PrompStashApp(appContainer = appContainer)
