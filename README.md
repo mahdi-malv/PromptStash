@@ -15,7 +15,7 @@ Platform: Android, Desktop, and soon iOS
 - [x] Theme settings
 - [x] Sync (Dropbox)
 - [x] Android homescreen widget
-- [ ] UI polish (Font, ColorSystem, so on)
+- [x] UI polish (Font, ColorSystem, so on)
 - [ ] iOS target
 
 
