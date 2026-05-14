@@ -2,15 +2,28 @@
 
 package com.mahdimalv.prompstash.ui.screens.library
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,9 +46,13 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,7 +62,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mahdimalv.prompstash.LocalAppContainer
-import com.mahdimalv.prompstash.data.model.Prompt
 import com.mahdimalv.prompstash.ui.platformViewModel
 import com.mahdimalv.prompstash.ui.components.FloatingNavBar
 import com.mahdimalv.prompstash.ui.components.PromptCard
@@ -69,6 +85,30 @@ fun PromptLibraryScreen(
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
+    val isScrolled by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+        }
+    }
+    var showFab by remember { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        var prevIndex = listState.firstVisibleItemIndex
+        var prevOffset = listState.firstVisibleItemScrollOffset
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.collect { (idx, off) ->
+            val scrollingDown = when {
+                idx > prevIndex -> true
+                idx < prevIndex -> false
+                else -> off > prevOffset
+            }
+            val atTop = idx == 0 && off == 0
+            showFab = !scrollingDown || atTop
+            prevIndex = idx
+            prevOffset = off
+        }
+    }
+
     LaunchedEffect(pendingMessage) {
         if (pendingMessage != null) {
             snackbarHostState.showSnackbar(pendingMessage)
@@ -85,48 +125,110 @@ fun PromptLibraryScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "PrompStash",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+    val syncAction: @Composable () -> Unit = {
+        if (supportsRemoteSync) {
+            IconButton(
+                onClick = viewModel::onSyncRequested,
+                enabled = !uiState.isSyncing,
+                modifier = Modifier.testTag("library_sync"),
+            ) {
+                if (uiState.isSyncing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(4.dp),
+                        strokeWidth = 2.dp,
                     )
-                },
-                actions = {
-                    if (supportsRemoteSync) {
-                        IconButton(
-                            onClick = viewModel::onSyncRequested,
-                            enabled = !uiState.isSyncing,
-                            modifier = Modifier.testTag("library_sync"),
-                        ) {
-                            if (uiState.isSyncing) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.padding(4.dp),
-                                    strokeWidth = 2.dp,
-                                )
-                            } else {
-                                Icon(
-                                    Icons.Outlined.Sync,
-                                    contentDescription = "Sync prompts",
-                                )
-                            }
-                        }
+                } else {
+                    Icon(
+                        Icons.Outlined.Sync,
+                        contentDescription = "Sync prompts",
+                    )
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.systemBarsPadding(),
+        topBar = {
+            Column {
+                AnimatedVisibility(
+                    visible = !isScrolled,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                "PrompStash",
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        },
+                        actions = { syncAction() },
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextField(
+                        value = uiState.searchQuery,
+                        onValueChange = viewModel::onSearchQueryChange,
+                        placeholder = {
+                            Text(
+                                "Search prompts…",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Outlined.Search,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("library_search"),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
+                        ),
+                        singleLine = true,
+                    )
+                    AnimatedVisibility(
+                        visible = isScrolled,
+                        enter = expandHorizontally() + fadeIn(),
+                        exit = shrinkHorizontally() + fadeOut(),
+                    ) {
+                        syncAction()
                     }
-                },
-            )
+                }
+            }
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNavigateToEditor,
-                icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
-                text = { Text("New") },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = MaterialTheme.shapes.extraLarge,
-            )
+            AnimatedVisibility(
+                visible = showFab,
+                enter = scaleIn() + fadeIn() + slideInHorizontally { it },
+                exit = scaleOut() + fadeOut() + slideOutHorizontally { it },
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToEditor,
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    text = { Text("New") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = MaterialTheme.shapes.extraLarge,
+                )
+            }
         },
         bottomBar = {
             FloatingNavBar(
@@ -149,38 +251,6 @@ fun PromptLibraryScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
         ) {
-            Spacer(Modifier.height(8.dp))
-            TextField(
-                value = uiState.searchQuery,
-                onValueChange = viewModel::onSearchQueryChange,
-                placeholder = {
-                    Text(
-                        "Search prompts…",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        Icons.Outlined.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("library_search"),
-                shape = MaterialTheme.shapes.medium,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                ),
-                singleLine = true,
-            )
-            Spacer(Modifier.height(20.dp))
             Text(
                 if (uiState.searchQuery.isBlank()) "All prompts" else "Search results",
                 style = MaterialTheme.typography.titleMedium,
