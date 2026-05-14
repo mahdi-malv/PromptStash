@@ -29,6 +29,13 @@ compose.desktop {
 
             macOS {
                 bundleID = "com.mahdimalv.prompstash.desktop"
+                iconFile.set(project.file("icons/icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("icons/icon.ico"))
+            }
+            linux {
+                iconFile.set(project.file("icons/icon.png"))
             }
         }
     }
