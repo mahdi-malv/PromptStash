@@ -6,5 +6,5 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <exclude domain="sharedpref" path="prompstash_secure_credentials.xml"/>
+    <exclude domain="sharedpref" path="promptstash_secure_credentials.xml"/>
 </full-backup-content>

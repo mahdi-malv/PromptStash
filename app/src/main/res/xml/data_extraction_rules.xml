@@ -5,9 +5,9 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <exclude domain="sharedpref" path="prompstash_secure_credentials.xml"/>
+        <exclude domain="sharedpref" path="promptstash_secure_credentials.xml"/>
     </cloud-backup>
     <device-transfer>
-        <exclude domain="sharedpref" path="prompstash_secure_credentials.xml"/>
+        <exclude domain="sharedpref" path="promptstash_secure_credentials.xml"/>
     </device-transfer>
 </data-extraction-rules>

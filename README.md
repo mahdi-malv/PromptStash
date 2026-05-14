@@ -30,7 +30,7 @@ To do that, create a Dropbox app in the [Dropbox App Console](https://www.dropbo
   - `files.content.read`
   - `files.content.write`
 - Redirect URIs:
-  - `prompstash://dropbox/auth`
+  - `promptstash://dropbox/auth`
   - `http://127.0.0.1:53682/dropbox/auth`
 
 Then add the app key to `local.properties`:
@@ -39,7 +39,7 @@ Then add the app key to `local.properties`:
 dropbox.app.key=YOUR_DROPBOX_APP_KEY
 ```
 
-Then in PrompStash:
+Then in PromptStash:
 
 1. Open Settings
 2. Select `Dropbox`

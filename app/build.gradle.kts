@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.mahdimalv.prompstash"
+    namespace = "com.mahdimalv.promptstash"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.mahdimalv.prompstash"
+        applicationId = "com.mahdimalv.promptstash"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

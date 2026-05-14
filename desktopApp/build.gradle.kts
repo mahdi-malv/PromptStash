@@ -20,15 +20,15 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "com.mahdimalv.prompstash.desktop.MainKt"
+        mainClass = "com.mahdimalv.promptstash.desktop.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Pkg)
-            packageName = "PrompStash"
+            packageName = "PromptStash"
             packageVersion = "1.0.0"
 
             macOS {
-                bundleID = "com.mahdimalv.prompstash.desktop"
+                bundleID = "com.mahdimalv.promptstash.desktop"
                 iconFile.set(project.file("icons/icon.icns"))
             }
             windows {

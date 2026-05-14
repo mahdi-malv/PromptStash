@@ -22,7 +22,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PrompStash"
+rootProject.name = "PromptStash"
 include(":app")
 include(":shared")
 include(":desktopApp")

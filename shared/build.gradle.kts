@@ -31,11 +31,11 @@ val generateDropboxConfig by tasks.registering {
 
     doLast {
         val outputDir = generatedDropboxConfigDir.get().asFile
-        val packageDir = outputDir.resolve("com/mahdimalv/prompstash/data/sync")
+        val packageDir = outputDir.resolve("com/mahdimalv/promptstash/data/sync")
         packageDir.mkdirs()
         packageDir.resolve("DropboxBuildConfig.kt").writeText(
             """
-            package com.mahdimalv.prompstash.data.sync
+            package com.mahdimalv.promptstash.data.sync
 
             internal object DropboxBuildConfig {
                 const val CLIENT_ID: String = ${dropboxAppKey.toKotlinStringLiteral()}
@@ -47,7 +47,7 @@ val generateDropboxConfig by tasks.registering {
 
 kotlin {
     android {
-        namespace = "com.mahdimalv.prompstash.shared"
+        namespace = "com.mahdimalv.promptstash.shared"
         compileSdk = 36
         minSdk = 24
     }
@@ -151,7 +151,7 @@ tasks.configureEach {
 
 compose.resources {
     publicResClass = true
-    packageOfResClass = "com.mahdimalv.prompstash.resources"
+    packageOfResClass = "com.mahdimalv.promptstash.resources"
     generateResClass = always
 }
 
