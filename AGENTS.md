@@ -57,6 +57,9 @@ Jetbrains Navigation3 (multiplatform, alpha). Routes are `@Serializable` sealed 
 ### Platform Abstractions
 `expect/actual` used for: `PlatformViewModel` factory, `SecureCredentialStore`, `DropboxAuthPlatform`, `createPlatformHttpClient()`.
 
+### UI design
+The system design is at `design.md` file describing what you should follow when making UI.
+
 ## Key Configuration
 
 Dropbox API key goes in `local.properties` (gitignored):
