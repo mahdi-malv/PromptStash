@@ -9,6 +9,7 @@ plugins {
 sourceSets {
     main {
         kotlin.srcDir("src/jvmMain/kotlin")
+        resources.srcDir("src/jvmMain/resources")
     }
 }
 

@@ -62,11 +62,7 @@ The system design is at `design.md` file describing what you should follow when 
 
 ## Key Configuration
 
-Dropbox API key goes in `local.properties` (gitignored):
-```
-dropbox.app.key=YOUR_KEY_HERE
-```
-The build system generates `DropboxBuildConfig.kt` from this property.
+The Dropbox OAuth client ID is committed at `shared/src/commonMain/kotlin/com/mahdimalv/promptstash/data/sync/DropboxAppConfig.kt` as a public PKCE client ID. There is one shared Dropbox app for the whole product — users do not need to register their own. Never add a Dropbox client secret to the client.
 
 ## Conventions
 

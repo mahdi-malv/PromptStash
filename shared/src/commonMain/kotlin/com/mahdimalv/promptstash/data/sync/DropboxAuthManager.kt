@@ -54,9 +54,9 @@ class DropboxAuthManager(
     }
 
     suspend fun startAuthorization(): String = authMutex.withLock {
-        if (DropboxBuildConfig.CLIENT_ID.isBlank()) {
+        if (DropboxAppConfig.CLIENT_ID.isBlank()) {
             throw DropboxAuthException(
-                "Dropbox auth is not configured for this build. Add dropbox.app.key to local.properties."
+                "Dropbox is not available in this build. Please contact the app maintainer."
             )
         }
         if (authorizationJob?.isActive == true) {
@@ -67,7 +67,7 @@ class DropboxAuthManager(
         val state = randomUrlSafeToken(32)
         val codeVerifier = randomUrlSafeToken(64)
         val authUrl = buildAuthorizationUrl(
-            clientId = DropboxBuildConfig.CLIENT_ID,
+            clientId = DropboxAppConfig.CLIENT_ID,
             redirectUri = redirect.redirectUri,
             state = state,
             codeChallenge = codeChallengeFor(codeVerifier),
@@ -220,7 +220,7 @@ class DropboxAuthManager(
                     parameters {
                         append("code", code)
                         append("grant_type", "authorization_code")
-                        append("client_id", DropboxBuildConfig.CLIENT_ID)
+                        append("client_id", DropboxAppConfig.CLIENT_ID)
                         append("redirect_uri", redirectUri)
                         append("code_verifier", codeVerifier)
                     }
@@ -251,7 +251,7 @@ class DropboxAuthManager(
                     parameters {
                         append("refresh_token", session.refreshToken)
                         append("grant_type", "refresh_token")
-                        append("client_id", DropboxBuildConfig.CLIENT_ID)
+                        append("client_id", DropboxAppConfig.CLIENT_ID)
                     }
                 )
             )

@@ -22,29 +22,12 @@ Platform: Android, Desktop, and soon iOS
 
 
 ## Sync
-You can use Dropbox storage to sync your prompts between your platforms.  
-To do that, create a Dropbox app in the [Dropbox App Console](https://www.dropbox.com/developers/apps) with:
+You can use Dropbox storage to sync your prompts between your platforms.
 
-- API: `Scoped access`
-- Access: `App folder`
-- Scopes:
-  - `account_info.read`
-  - `files.content.read`
-  - `files.content.write`
-- Redirect URIs:
-  - `promptstash://dropbox/auth`
-  - `http://127.0.0.1:53682/dropbox/auth`
-
-Then add the app key to `local.properties`:
-
-```properties
-dropbox.app.key=YOUR_DROPBOX_APP_KEY
-```
-
-Then in PromptStash:
+PromptStash ships with its own Dropbox app, so you don't need to create one. Just:
 
 1. Open Settings
 2. Select `Dropbox`
-3. Tap `Auth`
+3. Tap `Auth` and authorize PromptStash against your Dropbox account
 
-If you change scopes or redirect URIs later, remove auth in the app and authenticate again.
+Tokens are stored securely on-device (EncryptedSharedPreferences on Android, Keychain on macOS) and cleared when you disconnect.
